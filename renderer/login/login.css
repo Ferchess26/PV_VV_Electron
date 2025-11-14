@@ -1,0 +1,12 @@
+.login-body {
+  background: #f2f4f7;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  width: 350px;
+  border-radius: 12px;
+}

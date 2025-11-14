@@ -1,0 +1,23 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Electron build outputs
+dist/
+out/
+release/
+build/
+*.asar
+
+# Windows system files
+Thumbs.db
+desktop.ini
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local

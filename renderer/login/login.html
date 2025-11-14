@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - PV_VV_E" /></title>
+
+  <!-- Bootstrap -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+    rel="stylesheet"
+  />
+
+  <!-- CSS propio -->
+  <link rel="stylesheet" href="login.css" />
+</head>
+
+<body class="login-body">
+
+  <div class="login-card card p-4 shadow-lg">
+      <h2 class="text-center mb-4">PV_VV_E</h2>
+
+      <input id="user" class="form-control mb-3" placeholder="Usuario" />
+      <input id="pass" type="password" class="form-control mb-3" placeholder="Contraseña" />
+
+      <button class="btn btn-primary w-100" onclick="login()">Entrar</button>
+
+      <div id="error" class="text-danger mt-3 text-center"></div>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+</html>

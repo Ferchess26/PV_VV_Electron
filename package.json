@@ -1,0 +1,24 @@
+{
+  "name": "pv_vv_e",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electronmon ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^39.1.2",
+    "electronmon": "^2.0.4"
+  },
+  "build": {
+    "appId": "com.pvvve.app",
+    "productName": "PV_VV_E",
+    "icon": "assets/Logo.ico",
+    "win": {
+      "icon": "assets/Logo.ico"
+    }
+  }
+}
