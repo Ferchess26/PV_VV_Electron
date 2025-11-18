@@ -8,13 +8,20 @@ function login() {
     return;
   }
 
-  if (user === "admin" && pass === "123") {
-    window.location.href = "../home/home.html"; 
-  } else {
-    error.textContent = "Credenciales incorrectas.";
-  }
+  window.db.query("SELECT * FROM users WHERE username = ? AND password = ?", [user, pass])
+  .then(rows => {
+    if (rows.length > 0) {
+      window.electronAPI.send("login-success");
+    } else {
+      error.textContent = "Credenciales incorrectas.";
+    }
+  });
 
-  document.getElementById("min-btn").addEventListener("click", () => {
+  error.textContent = "Credenciales incorrectas.";
+}
+
+// --- Controles de ventanita del LOGIN ---
+document.getElementById("min-btn").addEventListener("click", () => {
   window.windowControls.minimize();
 });
 
@@ -25,5 +32,3 @@ document.getElementById("max-btn").addEventListener("click", () => {
 document.getElementById("close-btn").addEventListener("click", () => {
   window.windowControls.close();
 });
-
-}

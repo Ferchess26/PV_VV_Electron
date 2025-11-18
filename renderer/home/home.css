@@ -1,0 +1,96 @@
+/* NAVBAR navy */
+.clinic-navbar {
+    background: #0a1a33; /* Azul navy oscuro */
+    height: 65px;
+}
+
+/* Logo */
+.clinic-logo {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #ffffff;
+}
+
+/* Botones del navbar */
+.btn-clinic {
+    background: #13315c;
+    color: white;
+    border-radius: 8px;
+}
+
+.btn-clinic:hover {
+    background: #1c447a;
+}
+
+/* Hora */
+.clock {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Contenedor */
+.main-container {
+    height: calc(100vh - 65px);
+    background-color: #F0F0F0;
+}
+
+/* Buscador */
+.search-bar {
+    max-width: 500px;
+    border-radius: 10px;
+}
+
+/* Tabla con scroll */
+.table-container {
+    height: 70vh;
+    overflow-y: auto;
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #e4e4e4;
+}
+
+/* Header tabla */
+.table-header {
+    background: #e8eef5;
+}
+
+/* Scroll solo en la tabla */
+.table-container::-webkit-scrollbar {
+    width: 8px;
+}
+.table-container::-webkit-scrollbar-thumb {
+    background: #b2c3d6;
+    border-radius: 10px;
+}
+
+/* Caja de total a la derecha */
+.total-box {
+    width: 100%;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e4e4e4;
+}
+
+
+/* Foto de usuario */
+.profile-photo {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+/* Botón del usuario */
+.btn-user {
+    background: transparent;
+    color: white;
+    font-weight: 500;
+}
+
+.btn-user:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
