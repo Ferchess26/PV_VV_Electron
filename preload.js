@@ -2,9 +2,12 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 // Comunicación genérica
 contextBridge.exposeInMainWorld("electronAPI", {
-  send: (channel, data) => ipcRenderer.send(channel, data),
-  invoke: (channel, data) => ipcRenderer.invoke(channel, data),
-  on: (channel, callback) => ipcRenderer.on(channel, callback),
+  // Para eventos que NO esperan respuesta (ej. "login-success")
+  send: (channel, data) => ipcRenderer.send(channel, data), 
+  // Para funciones que SÍ esperan una respuesta (ej. "login", "db-query")
+  invoke: (channel, data) => ipcRenderer.invoke(channel, data), 
+  // Para escuchar eventos del proceso principal
+  on: (channel, callback) => ipcRenderer.on(channel, (event, ...args) => callback(...args)),
 });
 
 // Controles de ventana
@@ -14,9 +17,6 @@ contextBridge.exposeInMainWorld("windowControls", {
   close: () => ipcRenderer.send("close-window"),
 });
 
-// API para BD
-contextBridge.exposeInMainWorld("db", {
-  query: (sql, params) => ipcRenderer.invoke("db-query", { sql, params }),
-  run: (sql, params) => ipcRenderer.invoke("db-run", { sql, params }),
-  exec: (sql) => ipcRenderer.invoke("db-exec", sql),
-});
+// // ❌ SE ELIMINA LA EXPOSICIÓN DE LA API 'db' POR RIESGOS DE SEGURIDAD.
+// // Todas las operaciones de base de datos se manejan ahora mediante
+// // window.electronAPI.invoke("nombre-de-la-funcion-segura", data).

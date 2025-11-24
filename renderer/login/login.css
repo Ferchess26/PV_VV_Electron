@@ -1,12 +1,236 @@
-.login-body {
-  background: #f2f4f7;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* Paleta Adaptada:
+   - Primario (Botones/Éxito): #0369A1 (Azul Profundo)
+   - Hover Primario: #0c4a6e (Azul más oscuro)
+   - Fondo Principal: #1F2937 (Gris Oscuro, simulando el base-bgcolor del ejemplo)
+   - Texto de la Tarjeta: #c9d1d9 (Gris claro)
+   - Borde/Placeholder: #242c37 (Gris muy oscuro)
+*/
+
+/* --- CUERPO GENERAL (El Fondo Oscuro del SO) --- */
+body {
+    background: transparent !important; 
+    background-color: transparent !important;
+    color: #c9d1d9; /* Texto claro */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.login-card {
-  width: 350px;
-  border-radius: 12px;
+/* --- CONTENEDOR PRINCIPAL (El MÓDULO de login 700x450) --- */
+.login-container {
+    display: flex;
+    width: 700px;
+    height: 450px;
+    background: #242c37; /* El color de fondo del card del ejemplo, más oscuro */
+    border-radius: 0px;
+    
+    /* Sombra tipo el ejemplo, pero adaptada al azul */
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.7); 
+    
+    overflow: hidden;
+}
+
+/* --- SECCIÓN DE LA IMAGEN (Columna Izquierda - Estilo de fondo) --- */
+.login-image-section {
+    flex: 1; 
+    /* Usaremos tu color primario con un gradiente suave */
+    background: linear-gradient(135deg, #0369A1 0%, #0c4a6e 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: white; 
+    text-align: center;
+}
+
+/* TÍTULO DE LA APLICACIÓN DENTRO DEL MÓDULO */
+.app-name {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.app-slogan {
+    font-size: 0.9rem;
+    font-weight: 300;
+    opacity: 0.8;
+}
+
+.business-logo {
+    max-width: 120px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+/* --- SECCIÓN DEL FORMULARIO (Columna Derecha - Adaptada al 'register' del ejemplo) --- */
+.login-form-section {
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px 40px; 
+    background-color: transparent; /* Usa el color del contenedor */
+}
+
+.form-title {
+    color: #c9d1d9; /* Título color claro */
+    font-size: 2.2rem; /* Tamaño similar al ejemplo */
+    font-weight: 100; /* Peso ligero */
+    margin: 0 0 1.5rem;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* --- SECCIÓN DE INPUTS (CLAVE DEL DISEÑO) --- */
+
+.login-input-field {
+    /* Estilos base */
+    border: 1px solid #354152; 
+    border-radius: 999px;
+    background-color: transparent;
+    color: #c9d1d9;
+    text-align: center;
+    height: 45px;
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.5rem 2.5rem; 
+    
+    /* Agregamos una transición suave para el borde y la sombra */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; 
+
+    /* Estilos del icono (se mantienen) */
+    background-repeat: no-repeat;
+    background-size: 1.2rem;
+    background-position: 1rem 50%;
+}
+
+/* --- ESTILO DE FOCO (Cuando el usuario hace clic o tabula) --- */
+
+.login-input-field:focus {
+    outline: none !important;
+    /* Borde Azul Primario */
+    border-color: #0369A1 !important; 
+    /* Sombra exterior sutil azul */
+    box-shadow: 0 0 8px rgba(3, 105, 161, 0.6) !important; 
+}
+
+/* --- ESTILO DE HOVER (Cuando el mouse se posiciona encima) --- */
+/* Añadimos un hover suave para indicarle al usuario que es interactuable */
+.login-input-field:hover {
+    /* El borde se aclara ligeramente para mostrar interactividad */
+    border-color: #4a5568; 
+}
+
+
+/* --- ESTILO DE ERROR (Se debe aplicar una clase dinámica con JS) --- */
+
+/* Clase que tu JavaScript debe añadir a los campos que fallen la validación */
+.login-input-field.input-error {
+    /* Borde Rojo VIVO */
+    border-color: #dc2626 !important; 
+    /* Sombra de Error Roja */
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.6) !important; 
+}
+
+/* El estilo de foco sobre un campo con error */
+.login-input-field.input-error:focus {
+    /* Mantiene el foco rojo, dominando sobre el color primario */
+    border-color: #b91c1c !important; 
+    box-shadow: 0 0 8px rgba(185, 28, 28, 0.8) !important;
+}
+
+
+/* --- EL RESTO DE LOS ESTILOS (Sin cambios) --- */
+
+/* Título */
+.form-title {
+    color: #c9d1d9; 
+    font-size: 2.2rem; 
+    font-weight: 100;
+    margin: 0 0 1.5rem;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* Botón de Login */
+.btn-login {
+    background-image: linear-gradient(160deg, #0369A1 0%, #0c4a6e 100%) !important;
+    /* ... el resto de los estilos del botón se mantienen ... */
+    border-radius: 999px !important; 
+    height: 45px;
+    margin-top: 1.5rem !important;
+    transition: all 0.2s ease;
+}
+
+
+/* --- ÍCONOS EN INPUTS (Usamos Data URI como tu ejemplo) --- */
+/* NOTA: Para que esto funcione, DEBES usar el HTML sin Bootstrap classes en los inputs:
+   <input id="user" type="text" placeholder="Usuario" class="login-input-field" /> 
+   O usar clases específicas sin los estilos de Bootstrap que interfieren.
+*/
+
+.login-input-field {
+    /* Estilos base para los inputs con icono, si no usas form-control de Bootstrap */
+    border: 1px solid #354152; 
+    border-radius: 999px;
+    background-color: transparent;
+    color: #c9d1d9;
+    text-align: center;
+    height: 45px;
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.5rem 2.5rem; /* Deja espacio para el icono */
+
+    /* Estilos del icono */
+    background-repeat: no-repeat;
+    background-size: 1.2rem;
+    background-position: 1rem 50%; /* Posiciona el icono a 1rem del borde */
+}
+
+#user {
+    /* Correo/Usuario Icono (Adaptado a color #0369A1 para que se vea claro sobre el fondo oscuro) */
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="#0369A1"><path d="M256.017 273.436l-205.17-170.029h410.904l-205.734 170.029zm-.034 55.462l-205.983-170.654v250.349h412v-249.94l-206.017 170.245z"/></svg>');
+}
+
+#pass {
+    /* Candado Icono (Adaptado a color #0369A1) */
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="#0369A1"><path d="M195.334 223.333h-50v-62.666c0-61.022 49.645-110.667 110.666-110.667 61.022 0 110.667 49.645 110.667 110.667v62.666h-50v-62.666c0-33.452-27.215-60.667-60.667-60.667-33.451 0-60.666 27.215-60.666 60.667v62.666zm208.666 30v208.667h-296v-208.667h296zm-121 87.667c0-14.912-12.088-27-27-27s-27 12.088-27 27c0 7.811 3.317 14.844 8.619 19.773 4.385 4.075 6.881 9.8 6.881 15.785v22.942h23v-22.941c0-5.989 2.494-11.708 6.881-15.785 5.302-4.93 8.619-11.963 8.619-19.774z"/></svg>');
+}
+
+/* --- BOTÓN DE LOGIN --- */
+.btn-login {
+    /* Botón con gradiente de tu paleta azul, como el botón verde del ejemplo */
+    background-image: linear-gradient(160deg, #0369A1 0%, #0c4a6e 100%) !important;
+    color: #fff !important;
+    font-weight: 600;
+    height: 45px;
+    font-size: 1rem;
+    width: 100%;
+    margin-top: 1.5rem !important; 
+    border: none !important;
+    border-radius: 999px !important; /* Bordes de píldora */
+    transition: all 0.2s ease;
+}
+
+.btn-login:hover {
+    box-shadow: 0 5px 15px rgba(3, 105, 161, 0.4); /* Sombra al hacer hover */
+    transform: translateY(-1px);
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+/* Mensaje de Error (siempre visible pero con padding) */
+#error {
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding-top: 15px;
+    text-align: center;
 }

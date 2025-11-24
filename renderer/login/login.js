@@ -1,34 +1,39 @@
-function login() {
-  const user = document.getElementById("user").value.trim();
-  const pass = document.getElementById("pass").value.trim();
-  const error = document.getElementById("error");
+// login.js (fragmento de la función login)
 
-  if (user === "" || pass === "") {
-    error.textContent = "Llene ambos campos.";
-    return;
-  }
+async function login() { 
+    const userField = document.getElementById("user");
+    const passField = document.getElementById("pass");
+    const errorDisplay = document.getElementById("error");
 
-  window.db.query("SELECT * FROM users WHERE username = ? AND password = ?", [user, pass])
-  .then(rows => {
-    if (rows.length > 0) {
-      window.electronAPI.send("login-success");
-    } else {
-      error.textContent = "Credenciales incorrectas.";
+    // 1. Limpiar todos los errores al inicio
+    userField.classList.remove('input-error');
+    passField.classList.remove('input-error');
+    errorDisplay.textContent = "";
+
+    const user = userField.value.trim();
+    const pass = passField.value.trim();
+    let hasError = false;
+
+    if (user === "" || pass === "") {
+        errorDisplay.textContent = "Llene ambos campos.";
+        if (user === "") userField.classList.add('input-error');
+        if (pass === "") passField.classList.add('input-error');
+        return;
     }
-  });
 
-  error.textContent = "Credenciales incorrectas.";
+    try {
+        const loginSuccessful = await window.electronAPI.invoke("login", { user, pass });
+        
+        if (loginSuccessful) {
+            window.electronAPI.send("login-success");
+        } else {
+            errorDisplay.textContent = "Credenciales incorrectas.";
+            // 2. Aplicar error a ambos campos si las credenciales fallan
+            userField.classList.add('input-error');
+            passField.classList.add('input-error');
+        }
+    } catch (e) {
+        console.error("Error en el login:", e);
+        errorDisplay.textContent = "Ocurrió un error en el sistema de login.";
+    }
 }
-
-// --- Controles de ventanita del LOGIN ---
-document.getElementById("min-btn").addEventListener("click", () => {
-  window.windowControls.minimize();
-});
-
-document.getElementById("max-btn").addEventListener("click", () => {
-  window.windowControls.maximize();
-});
-
-document.getElementById("close-btn").addEventListener("click", () => {
-  window.windowControls.close();
-});
