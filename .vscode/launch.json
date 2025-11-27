@@ -1,0 +1,53 @@
+{
+    // Usa IntelliSense para aprender sobre los atributos posibles.
+    // Pasa el mouse para ver las descripciones de los atributos existentes.
+    // Para obtener más información, visita: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        // 1. Configuración para el PROCESO PRINCIPAL (Main Process)
+        {
+            "name": "Electron: Main",
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            
+            // Reemplaza 'main.js' con el nombre de tu archivo principal si es diferente.
+            "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/electron", 
+            "program": "${workspaceFolder}/main.js", 
+            
+            "runtimeArgs": [
+                "--enable-source-maps"
+            ],
+            "args": [
+                "."
+            ],
+            "outputCapture": "std",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        
+        // 2. Configuración para el PROCESO RENDERIZADOR (Renderer Process)
+        // Esta configuración se "adjunta" automáticamente al proceso web que abre Electron.
+        {
+            "name": "Electron: Renderer",
+            "type": "chrome",
+            "request": "attach",
+            "port": 9222, // Puerto estándar que usa Electron para la depuración
+            "webRoot": "${workspaceFolder}",
+            "timeout": 30000 // Aumenta el tiempo de espera por si el proceso tarda en iniciar
+        }
+    ],
+    
+    // 3. Configuración COMPUESTA (Compound)
+    // Lanza el Proceso Principal, y automáticamente adjunta el Renderer.
+    "compounds": [
+        {
+            "name": "Electron: All",
+            "configurations": [
+                "Electron: Main",
+                "Electron: Renderer"
+            ]
+        }
+    ]
+}
