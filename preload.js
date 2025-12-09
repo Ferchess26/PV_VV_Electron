@@ -16,7 +16,3 @@ contextBridge.exposeInMainWorld("windowControls", {
   maximize: () => ipcRenderer.send("maximize-window"),
   close: () => ipcRenderer.send("close-window"),
 });
-
-// // ❌ SE ELIMINA LA EXPOSICIÓN DE LA API 'db' POR RIESGOS DE SEGURIDAD.
-// // Todas las operaciones de base de datos se manejan ahora mediante
-// // window.electronAPI.invoke("nombre-de-la-funcion-segura", data).

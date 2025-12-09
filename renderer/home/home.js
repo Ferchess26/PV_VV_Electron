@@ -1,50 +1,54 @@
 /**
  * =========================================================
- * HOME.JS - LÓGICA PRINCIPAL DEL RENDERER
+ * HOME.JS - LÓGICA PRINCIPAL DEL RENDERER (VERSIÓN LIMPIA)
  * =========================================================
- * * Contiene la inicialización, el manejo de ventas (tabs) y la carga dinámica de módulos.
+ *
+ * Contiene la inicialización del entorno (reloj, modales globales)
+ * y la lógica principal del sistema de TABS de Venta.
  */
 
 // =========================================================
-// I. UTILIDADES GLOBALES Y RELOJ
+// I. UTILIDADES GLOBALES (RELOJ)
 // =========================================================
 
+/**
+ * Actualiza el elemento del reloj con la hora y fecha actuales.
+ */
 function updateClock() {
     const clockElement = document.getElementById('clock');
     if (!clockElement) return;
 
     const now = new Date();
-    const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
     const dateOptions = { weekday: 'short', day: '2-digit', month: 'short' };
-    const timeString = now.toLocaleTimeString('es-ES', options);
+    const timeString = now.toLocaleTimeString('es-ES', timeOptions);
     const dateString = now.toLocaleDateString('es-ES', dateOptions);
 
     clockElement.textContent = `${dateString} | ${timeString}`;
 }
 
-// Inicialización del reloj
+// Inicialización y loop del reloj
 updateClock();
 setInterval(updateClock, 1000);
 
-
+// ---------------------------------------------------------
 
 // =========================================================
-// II. FUNCIONES DE CARGA DE MÓDULOS (MODALES)
+// II. FUNCIONES DE CARGA DINÁMICA DE MÓDULOS (MODALES)
 // =========================================================
 
 /**
  * Carga un módulo (HTML, CSS, y JS) diseñado para ser una ventana flotante (Modal).
  * Inyecta el HTML en #modal-container y usa Bootstrap para mostrarlo.
- * * @param {string} moduleName - Nombre del módulo (e.g., 'profile').
+ *
+ * @param {string} moduleName - Nombre del módulo (e.g., 'profile').
  */
 function loadModalModule(moduleName) {
     const modalContainer = document.getElementById('modal-container');
+    const moduleBaseDir = `../${moduleName}/`; 
+    const scriptId = `js-${moduleName}`;
 
-    // CORRECCIÓN CLAVE: Subimos un nivel (../) para acceder a la carpeta hermana 'profile'
-    const moduleBaseDir = `../${moduleName}/`;
-    const htmlPath = `${moduleBaseDir}${moduleName}.html`;
-
-    // 1. CARGAR CSS DINÁMICAMENTE
+    // Paso 1: Cargar CSS dinámicamente
     const cssPath = `${moduleBaseDir}${moduleName}.css`;
     let styleLink = document.getElementById(`css-${moduleName}`);
 
@@ -56,59 +60,78 @@ function loadModalModule(moduleName) {
         document.head.appendChild(styleLink);
     }
 
-    // 2. CARGAR EL HTML
-    fetch(htmlPath)
+    // Paso 2: Cargar el HTML
+    fetch(`${moduleBaseDir}${moduleName}.html`)
         .then(response => {
             if (!response.ok) {
-                console.error(`Error de ruta: Intentando cargar desde ${htmlPath}`);
-                throw new Error(`Módulo modal no encontrado. Ruta esperada: ${htmlPath}`);
+                console.error(`Error 404: No se encontró el HTML del módulo '${moduleName}'. Ruta: ${response.url}`);
+                throw new Error(`Módulo modal no encontrado.`);
             }
             return response.text();
         })
         .then(html => {
+            // Limpieza e Inyección de HTML
             modalContainer.innerHTML = html;
 
-            // 3. Crear y Mostrar el modal
-            const modalElement = document.getElementById('userProfileModal');
+            // Paso 3: Crear y Mostrar el modal
+            const modalElement = modalContainer.querySelector('.modal');
+            if (!modalElement) {
+                console.error(`Error: El HTML de '${moduleName}' no contiene el elemento .modal.`);
+                return;
+            }
             const modalInstance = new bootstrap.Modal(modalElement);
             modalInstance.show();
 
-            // 4. CARGAR Y EJECUTAR EL JAVASCRIPT
+            // Paso 4: CARGAR Y EJECUTAR EL JAVASCRIPT
             const scriptPath = `${moduleBaseDir}${moduleName}.js`;
 
             fetch(scriptPath)
                 .then(response => {
-                    if (response.ok) return response.text();
-                    return null;
+                    if (!response.ok) {
+                        console.warn(`ADVERTENCIA: No se encontró el script JS en la ruta: ${scriptPath}. Estado: ${response.status}`);
+                        return null;
+                    }
+                    return response.text();
                 })
                 .then(scriptText => {
                     if (scriptText) {
+                        // INYECCIÓN Y EJECUCIÓN
                         const script = document.createElement('script');
+                        script.id = scriptId;
                         script.textContent = scriptText;
-                        document.body.appendChild(script);
+                        document.body.appendChild(script); 
+                        console.log(`Script '${moduleName}.js' inyectado correctamente.`);
                     }
                 })
-                .catch(error => console.error(`Error al cargar el script ${moduleName}.js:`, error));
+                .catch(error => console.error(`ERROR DE FETCH JS: Fallo inesperado al cargar el script ${moduleName}.js:`, error));
 
-            // 5. LIMPIEZA: Remover el HTML del DOM al cerrar el modal
+            // Paso 5: LIMPIEZA al cerrar el modal
             modalElement.addEventListener('hidden.bs.modal', function () {
                 modalContainer.innerHTML = '';
-            });
+                
+                const scriptElement = document.getElementById(scriptId);
+                if (scriptElement) {
+                    scriptElement.remove(); 
+                }
+            }, { once: true });
         })
-        .catch(error => console.error(`Error al cargar el módulo modal ${moduleName}:`, error));
+        .catch(error => console.error(`ERROR DE FETCH HTML: Fallo inesperado al cargar el módulo modal ${moduleName}:`, error));
 }
 
+// ---------------------------------------------------------
 
 // =========================================================
-// III. LÓGICA PRINCIPAL DE VENTA (Ejecución al cargar el DOM)
+// III. INICIALIZACIÓN Y LÓGICA PRINCIPAL (DOM LOADED)
 // =========================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
 
-    // --- 3.1. DECLARACIÓN E INICIALIZACIÓN DE VARIABLES GLOBALES ---
+    // --- 3.1. DECLARACIÓN E INICIALIZACIÓN DE VARIABLES LOCALES ---
+
     const saleTabsContainer = document.getElementById('saleTabs');
     const saleTabContent = document.getElementById('saleTabContent');
     const addSaleButton = document.getElementById('add-sale-tab');
+    const profileBtn = document.getElementById('profile-btn');
 
     const MAX_SALES = 15;
     let globalSaleCounter = 1;
@@ -119,26 +142,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             total: 3500.00
         }
     };
-
-    const profileBtn = document.getElementById('profile-btn');
-
-    // --- 3.2. LISTENERS PARA MÓDULOS ---
-    if (profileBtn) {
-        profileBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            // CORRECCIÓN: Llamamos a la función loadModalModule
-            loadModalModule('profile'); // <-- Aquí se dispara la función
-        });
-    }
-
-    // --- 3.3. PROCESO DE INICIALIZACIÓN ASÍNCRONA DE MODALES ---
-
+    
+    // Referencias para el Modal Genérico (Global)
     await loadGlobalModal();
-
     const globalModalElement = document.getElementById('globalConfirmModal');
-
+    
     if (!window.bootstrap || !globalModalElement) {
-        console.error("CRITICAL ERROR: Bootstrap no está cargado o el elemento Modal no se encontró.");
+        console.error("CRITICAL ERROR: Bootstrap no está cargado o el elemento Modal Global no se encontró.");
         return;
     }
 
@@ -146,60 +156,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     const globalConfirmBtn = document.getElementById('globalModalConfirmBtn');
     const globalModalTitle = document.getElementById('globalConfirmModalLabel');
     const globalModalBody = document.getElementById('globalModalBody');
-    let modalCallback = null;
+    let modalCallback = null; // Función a ejecutar al confirmar el modal genérico
 
-    // Ajustar la pestaña inicial a solo "#1" e inicializar la pestaña de Bootstrap
+
+    // Inicializar la pestaña de venta #1
     const initialTabButton = document.getElementById('tab-venta-1');
     if (initialTabButton) {
         new bootstrap.Tab(initialTabButton);
         initialTabButton.innerHTML = `#1 <i class="fas fa-times-circle close-tab-icon"></i>`;
     }
 
-    // --- 3.4. DECLARACIÓN DE FUNCIONES PRINCIPALES DE VENTA ---
+    // --- 3.2. FUNCIONES LOCALES DE VENTA (Optimizadas) ---
 
     function getNextSaleNumber() {
+        // Encuentra el primer número de venta disponible
         const usedNumbers = Object.values(salesData).map(data => data.number).sort((a, b) => a - b);
         let nextNumber = 1;
-
         for (const num of usedNumbers) {
-            if (num === nextNumber) {
-                nextNumber++;
-            } else {
-                return nextNumber;
-            }
+            if (num === nextNumber) { nextNumber++; } else { return nextNumber; }
         }
         return nextNumber;
     }
 
     function checkTabCount() {
+        // Ajusta la clase si hay demasiados tabs
         const currentTabs = saleTabsContainer.querySelectorAll('.nav-link').length;
-
-        if (currentTabs >= 8) {
-            saleTabsContainer.classList.add('shrink-tabs');
-        } else {
-            saleTabsContainer.classList.remove('shrink-tabs');
-        }
+        saleTabsContainer.classList.toggle('shrink-tabs', currentTabs >= 8);
     }
 
     function findInsertionPoint(saleNumber) {
+        // Encuentra el punto para insertar la nueva pestaña en orden numérico
         if (saleNumber === 1) { return null; }
         const tabButtons = saleTabsContainer.querySelectorAll('.nav-link');
 
         for (let i = 0; i < tabButtons.length; i++) {
             const button = tabButtons[i];
             const existingNumberMatch = button.innerHTML.match(/#(\d+)/);
-
             if (existingNumberMatch) {
                 const existingNumber = parseInt(existingNumberMatch[1], 10);
-
                 if (saleNumber < existingNumber) {
-                    return i > 0 ? tabButtons[i - 1] : null;
+                    // Retorna el botón ANTERIOR al punto de inserción
+                    return i > 0 ? tabButtons[i - 1] : null; 
                 }
             }
         }
+        // Retorna el último botón si la nueva venta es el número más alto
         return tabButtons.length > 0 ? tabButtons[tabButtons.length - 1] : null;
     }
-
 
     function createNewSaleTab() {
         if (saleTabsContainer.children.length >= MAX_SALES) {
@@ -211,76 +214,67 @@ document.addEventListener('DOMContentLoaded', async () => {
         const saleNumber = getNextSaleNumber();
         const saleId = `venta-${globalSaleCounter}`;
 
-        // Crear elementos (tabButton y tabPane)
+        // Crear Tab Button
         const tabButton = document.createElement('button');
-        tabButton.classList.add('nav-link', 'sale-tab-btn');
-        tabButton.setAttribute('id', `tab-${saleId}`);
-        tabButton.setAttribute('data-bs-toggle', 'tab');
-        tabButton.setAttribute('data-bs-target', `#content-${saleId}`);
-        tabButton.setAttribute('type', 'button');
-        tabButton.setAttribute('role', 'tab');
-        tabButton.setAttribute('aria-controls', `content-${saleId}`);
-        tabButton.setAttribute('aria-selected', 'false');
+        tabButton.className = 'nav-link sale-tab-btn';
+        tabButton.id = `tab-${saleId}`;
+        tabButton.dataset.bsToggle = 'tab';
+        tabButton.dataset.bsTarget = `#content-${saleId}`;
+        tabButton.type = 'button';
+        tabButton.role = 'tab';
+        tabButton.ariaControls = `content-${saleId}`;
+        tabButton.ariaSelected = 'false';
         tabButton.innerHTML = `#${saleNumber} <i class="fas fa-times-circle close-tab-icon"></i>`;
 
+        // Crear Tab Pane (Contenido)
         const tabPane = document.createElement('div');
-        tabPane.classList.add('tab-pane', 'fade', 'h-100');
-        tabPane.setAttribute('id', `content-${saleId}`);
-        tabPane.setAttribute('role', 'tabpanel');
-        tabPane.setAttribute('aria-labelledby', `tab-${saleId}`);
-        tabPane.setAttribute('tabindex', '0');
+        tabPane.className = 'tab-pane fade h-100';
+        tabPane.id = `content-${saleId}`;
+        tabPane.role = 'tabpanel';
+        tabPane.tabIndex = '0';
         tabPane.innerHTML = `
             <div class="table-container h-100"> 
                 <table class="table table-hover align-middle table-striped">
                     <thead class="table-header">
                         <tr>
-                            <th>Código</th>
-                            <th>Producto</th>
-                            <th>Cantidad</th>
-                            <th>Precio</th>
-                            <th>Subtotal</th>
+                            <th>Código</th><th>Producto</th><th>Cantidad</th>
+                            <th>Precio</th><th>Subtotal</th>
                         </tr>
                     </thead>
-                    <tbody id="product-table-${saleId}">
-                        </tbody>
+                    <tbody id="product-table-${saleId}"></tbody>
                 </table>
             </div>
         `;
 
+        // Insertar en la posición correcta (orden por número de venta)
         const insertionPoint = findInsertionPoint(saleNumber);
-
         if (insertionPoint) {
-            insertionPoint.after(tabButton);
-            const insertionContentId = insertionPoint.getAttribute('data-bs-target').substring(1);
+            const insertionContentId = insertionPoint.dataset.bsTarget.substring(1);
             const insertionContent = document.getElementById(insertionContentId);
+            insertionPoint.after(tabButton);
             insertionContent.after(tabPane);
-
         } else {
             saleTabsContainer.prepend(tabButton);
             saleTabContent.prepend(tabPane);
         }
 
+        // Inicializar datos, mostrar y contar
         salesData[saleId] = { number: saleNumber, products: [], total: 0.00 };
-
-        const newTab = new bootstrap.Tab(tabButton);
-        newTab.show();
-
+        new bootstrap.Tab(tabButton).show();
         checkTabCount();
     }
 
     function performCloseSale(tabButton) {
         const tabId = tabButton.id;
-
         if (saleTabsContainer.children.length <= 1) { return; }
 
         const isActive = tabButton.classList.contains('active');
-        const tabPaneId = tabButton.getAttribute('data-bs-target').substring(1);
-        const tabPane = document.getElementById(tabPaneId);
-
+        const tabPaneId = tabButton.dataset.bsTarget.substring(1);
+        
         const saleKey = tabId.replace('tab-', '');
         delete salesData[saleKey];
         tabButton.remove();
-        tabPane.remove();
+        document.getElementById(tabPaneId).remove(); 
 
         if (isActive) {
             const nextButton = saleTabsContainer.querySelector('.nav-link') || null;
@@ -290,8 +284,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function closeSaleTab(tabButton) {
-        const tabId = tabButton.id;
-        const saleKey = tabId.replace('tab-', '');
+        const saleKey = tabButton.id.replace('tab-', '');
         const currentSaleData = salesData[saleKey];
 
         if (saleTabsContainer.children.length <= 1) {
@@ -300,23 +293,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (currentSaleData && currentSaleData.products.length > 0) {
-            const saleNumber = currentSaleData.number;
-            const title = 'Cerrar venta';
-            const body = `<p>La venta actual (<strong>#${saleNumber}</strong>) contiene productos. ¿Estás seguro de que deseas <strong>cerrar la venta y descartar todos los productos</strong>?</p>`;
-
+            const title = 'Cerrar Venta';
+            const body = `<p>La venta actual (<strong>#${currentSaleData.number}</strong>) contiene productos. ¿Estás seguro de que deseas <strong>cerrar la venta y descartar todos los productos</strong>?</p>`;
             const confirmAction = () => { performCloseSale(tabButton); };
 
             showGenericModal(title, body, confirmAction, 'Cerrar Venta', 'btn-danger');
-
         } else {
             performCloseSale(tabButton);
         }
     }
 
-    // --- 3.5. LISTENERS DE EVENTOS PRINCIPALES DE VENTA ---
 
+    // --- 3.3. LISTENERS DE EVENTOS ---
+
+    // Listener para abrir el perfil
+    if (profileBtn) {
+        profileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadModalModule('profile');
+        });
+    }
+
+    // Listener para crear nueva venta
     addSaleButton.addEventListener('click', createNewSaleTab);
 
+    // Listener delegado para cerrar venta
     saleTabsContainer.addEventListener('click', (event) => {
         const closeIcon = event.target.closest('.close-tab-icon');
         if (closeIcon) {
@@ -327,15 +328,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // Listener al cambiar de pestaña de venta
     saleTabsContainer.addEventListener('shown.bs.tab', (event) => {
         const newTabId = event.target.id;
         const newSaleKey = newTabId.replace('tab-', '');
-
         const total = salesData[newSaleKey]?.total || 0;
         document.getElementById('total').textContent = `$${total.toFixed(2)}`;
     });
 
-    checkTabCount();
+    // Listener de confirmación para el modal genérico
+    globalConfirmBtn.addEventListener('click', () => {
+        if (modalCallback) {
+            modalCallback();
+        }
+        globalModal.hide();
+        modalCallback = null;
+    });
+
+    checkTabCount(); 
+    
+    // ---------------------------------------------------------
 
 
     // =========================================================
@@ -343,17 +355,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     // =========================================================
 
     /**
-     * Carga el archivo modal.html de forma asíncrona en el contenedor de modales.
-     * Asume que '../../helpers/modal.html' contiene el esqueleto de globalConfirmModal.
+     * Carga el archivo modal.html (modal de confirmación global)
      */
     async function loadGlobalModal() {
         try {
             const modalContainer = document.getElementById('modal-container');
+            const existingGlobalModal = document.getElementById('globalConfirmModal');
+            
+            if (existingGlobalModal) return; 
+
             const response = await fetch('../../helpers/modal.html');
             const modalHtml = await response.text();
-            modalContainer.innerHTML = modalHtml;
+            
+            // Usamos un div temporal para añadirlo al contenedor sin borrar contenido existente
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = modalHtml;
+            if (tempDiv.firstChild) {
+                modalContainer.appendChild(tempDiv.firstChild); 
+            }
         } catch (error) {
-            console.error("Error al cargar el modal de confirmación.", error);
+            console.error("Error al cargar el modal de confirmación global.", error);
         }
     }
 
@@ -370,19 +391,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     /**
-     * Muestra el componente de alerta de error temporal (fade-in/out).
+     * Muestra el componente de alerta de error temporal.
      */
     async function showAlertError(message) {
         try {
             const response = await fetch('../../helpers/alert_error.html');
-            let alertHtml = await response.text();
+            const alertHtml = await response.text();
 
             const alertWrapper = document.createElement('div');
             alertWrapper.innerHTML = alertHtml;
             const alertElement = alertWrapper.querySelector('.alert');
 
-            alertElement.classList.add('alert-danger', 'alert-fixed-bottom-left');
-            alertElement.classList.remove('alert-secondary');
+            alertElement.classList.add('alert-danger', 'alert-fixed-bottom-left', 'fade');
             alertElement.textContent = `${message}`;
 
             document.body.appendChild(alertElement);
@@ -391,33 +411,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const fadeDuration = 500;
 
             // Fade-in
-            setTimeout(() => {
-                alertElement.classList.add('show');
-            }, 10);
+            setTimeout(() => { alertElement.classList.add('show'); }, 10);
 
             // Fade-out y eliminación
             setTimeout(() => {
                 alertElement.classList.remove('show');
-
-                setTimeout(() => {
-                    alertElement.remove();
-                }, fadeDuration);
-
+                setTimeout(() => { alertElement.remove(); }, fadeDuration);
             }, visibilityDuration);
 
         } catch (error) {
             console.error("Error al cargar o mostrar la alerta de error. Usando alert() como respaldo.", error);
-            alert(message);
+            // Fallback: Si la carga del helper falla, usamos alert() de respaldo
+            alert(message); 
         }
     }
-
-    // Listener del modal genérico
-    globalConfirmBtn.addEventListener('click', () => {
-        if (modalCallback) {
-            modalCallback();
-        }
-        globalModal.hide();
-        modalCallback = null;
-    });
 
 });

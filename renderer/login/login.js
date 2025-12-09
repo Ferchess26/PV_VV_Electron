@@ -1,18 +1,17 @@
-// login.js (fragmento de la función login)
+// login.js
 
 async function login() { 
     const userField = document.getElementById("user");
     const passField = document.getElementById("pass");
     const errorDisplay = document.getElementById("error");
 
-    // 1. Limpiar todos los errores al inicio
+    // limpiar errores
     userField.classList.remove('input-error');
     passField.classList.remove('input-error');
     errorDisplay.textContent = "";
 
     const user = userField.value.trim();
     const pass = passField.value.trim();
-    let hasError = false;
 
     if (user === "" || pass === "") {
         errorDisplay.textContent = "Llene ambos campos.";
@@ -22,13 +21,21 @@ async function login() {
     }
 
     try {
-        const loginSuccessful = await window.electronAPI.invoke("login", { user, pass });
-        
-        if (loginSuccessful) {
+        const session = await window.electronAPI.invoke("login", { user, pass });
+
+        if (session) {
+
+            // 🔥 ver si SI trae los permisos
+            console.log("=== SESIÓN DEL USUARIO ===");
+            console.log(session);
+
+            console.log("=== PERMISOS DEL USUARIO ===");
+            console.table(session.permisos);
+
+            // navegar al home
             window.electronAPI.send("login-success");
         } else {
             errorDisplay.textContent = "Credenciales incorrectas.";
-            // 2. Aplicar error a ambos campos si las credenciales fallan
             userField.classList.add('input-error');
             passField.classList.add('input-error');
         }
@@ -37,3 +44,4 @@ async function login() {
         errorDisplay.textContent = "Ocurrió un error en el sistema de login.";
     }
 }
+
