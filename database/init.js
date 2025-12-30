@@ -79,6 +79,26 @@ function initializeDatabase() {
       );
     `);
 
+  // 10. Tabla CLIENTS
+  db.exec(`
+      CREATE TABLE IF NOT EXISTS clients (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT NOT NULL,
+    apellido_paterno TEXT,
+    apellido_materno TEXT,
+    email TEXT UNIQUE,
+    telefono TEXT,
+    rfc TEXT UNIQUE,
+    direccion TEXT,
+    ciudad TEXT,
+    estado TEXT,
+    codigo_postal TEXT,
+    estatus INTEGER DEFAULT 1,
+    fecha_creacion TEXT DEFAULT (datetime('now'))
+);
+    `);
+
+
 
   // =========================================================
   // INSERCIÓN DE DATOS INICIALES (SEEDING)
@@ -88,6 +108,7 @@ function initializeDatabase() {
   const insertPermiso = db.prepare("INSERT OR IGNORE INTO permisos (nombre, modulo) VALUES (?, ?)");
   const rolPermisoInsert = db.prepare("INSERT OR IGNORE INTO rol_permiso (id_rol, id_permiso) VALUES (?, ?)");
   const insertUser = db.prepare("INSERT INTO users (username, password, nombre, apellido_paterno, apellido_materno, id_rol) VALUES (?, ?, ?, ?, ?, ?)");
+  const insertClient = db.prepare(`INSERT INTO clients (nombre, apellido_paterno, apellido_materno, email, telefono, rfc, direccion, ciudad, estado, codigo_postal)VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
 
 
   // --- 6. Insertar ROLES ---
@@ -110,6 +131,12 @@ function initializeDatabase() {
     { nombre: 'CERRAR_CAJA', modulo: 'FINANZAS' },
     { nombre: 'GESTIONAR_USUARIOS', modulo: 'ADMIN' },
     { nombre: 'GESTIONAR_PRODUCTOS', modulo: 'ADMIN' },
+
+    // ===== CLIENTES =====
+    { nombre: 'VER_CLIENTES', modulo: 'CLIENTES' },
+    { nombre: 'CREAR_CLIENTE', modulo: 'CLIENTES' },
+    { nombre: 'EDITAR_CLIENTE', modulo: 'CLIENTES' },
+    { nombre: 'ELIMINAR_CLIENTE', modulo: 'CLIENTES' },
   ];
 
   permisosToInsert.forEach(p => insertPermiso.run(p.nombre, p.modulo));
@@ -141,6 +168,27 @@ function initializeDatabase() {
     insertUser.run("admin", "1234", "Administrador", "Sistema", "", adminRoleId);
     console.log("Usuario administrador creado: admin / 1234 con Rol ID: " + adminRoleId);
   }
+
+  // --- 12. Insertar CLIENTE de ejemplo si no existen ---
+  const clientCount = db.prepare("SELECT COUNT(*) AS total FROM clients").get().total;
+
+  if (clientCount === 0) {
+    insertClient.run(
+      "Juan",
+      "Pérez",
+      "García",
+      "juan.perez@email.com",
+      "4421234567",
+      "PEPJ8001019Q8",
+      "Av. Principal #123",
+      "San José Iturbide",
+      "Guanajuato",
+      "37980"
+    );
+
+    console.log("Cliente de ejemplo creado.");
+  }
+
 
 
   db.close();

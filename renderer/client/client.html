@@ -1,0 +1,132 @@
+<!-- =========================================================
+     MODAL CLIENTES
+========================================================= -->
+<div class="modal fade" id="clientsModal" tabindex="-1" aria-labelledby="clientsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg">
+
+            <!-- HEADER -->
+            <div class="modal-header modal-header-clients">
+                <h5 class="modal-title fs-5" id="clientsModalLabel">
+                    <i class="fas fa-users me-2"></i> Clientes
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body p-4">
+
+                <!-- Barra superior -->
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <input type="text" id="client-search" class="form-control client-search-input"
+                        placeholder="🔍 Buscar por nombre, correo, teléfono o RFC">
+
+                    <select id="client-status-filter" class="form-select form-select-sm w-auto">
+                        <option value="all">Todos</option>
+                        <option value="active">Activos</option>
+                        <option value="inactive">Inactivos</option>
+                    </select>
+
+                    <button type="button" class="btn btn-outline-primary fw-semibold" id="btn-new-client">
+                        <i class="fas fa-user-plus me-1"></i> Nuevo Cliente
+                    </button>
+                </div>
+
+                <!-- Tabla -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle clients-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th data-sort="nombre_completo">Nombre</th>
+                                <th data-sort="email">Email</th>
+                                <th data-sort="telefono">Teléfono</th>
+                                <th data-sort="rfc">RFC</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-table-body">
+                            <!-- Render dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cerrar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="clientFormModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content client-form-content">
+
+            <div class="modal-header modal-header-clients">
+                <h5 class="modal-title" id="clientFormTitle">Nuevo Cliente</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="client-id">
+
+                <div class="mb-2">
+                    <label class="form-label fw-bold">Nombre <span class="text-danger">*</span></label>
+                    <input type="text" id="client-nombre" class="form-control">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold">Apellido Paterno <span class="text-danger">*</span></label>
+                        <input type="text" id="client-apellido-paterno" class="form-control">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold">Apellido Materno <span class="text-danger">*</span></label>
+                        <input type="text" id="client-apellido-materno" class="form-control">
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label fw-bold">Email</label>
+                    <input type="email" id="client-email" class="form-control">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold">Teléfono <span class="text-danger">*</span></label>
+                        <input type="text" id="client-telefono" class="form-control" placeholder="10 dígitos" maxlength="10">
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <label class="form-label fw-bold">RFC</label>
+                        <input type="text" id="client-rfc" class="form-control" maxlength="13">
+                    </div>
+                </div>
+
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="client-estatus" checked>
+                    <label class="form-check-label fw-bold" for="client-estatus">Cliente Activo</label>
+                </div>
+
+                <div id="error-message-client" class="text-danger small mt-3 fw-bold pt-2" style="display: none; border-top: 1px solid #f8d7da;">
+                    * Por favor, rellene los campos obligatorios correctamente.
+                </div>
+            </div>
+
+            <div class="modal-footer border-0">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary px-4" id="btn-save-client" style="background-color: #1A365D; border: none;">
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>

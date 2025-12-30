@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const saleTabContent = document.getElementById('saleTabContent');
     const addSaleButton = document.getElementById('add-sale-tab');
     const profileBtn = document.getElementById('profile-btn');
+    const clientBtn = document.getElementById('client-btn');
 
     const MAX_SALES = 15;
     let globalSaleCounter = 1;
@@ -311,6 +312,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         profileBtn.addEventListener('click', (e) => {
             e.preventDefault();
             loadModalModule('profile');
+        });
+    }
+
+    // Listener para abrir el cliente
+    if (clientBtn) {
+        clientBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadModalModule('client');
         });
     }
 

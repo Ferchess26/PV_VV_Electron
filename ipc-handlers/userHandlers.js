@@ -20,8 +20,7 @@ function setupUserHandlers(db) {
             r.nombre AS rol
         FROM users u
         INNER JOIN roles r ON r.id = u.id_rol
-        WHERE u.username = ? AND u.password = ?
-    `).get(user, pass);
+        WHERE u.username = ? AND u.password = ? `).get(user, pass);
 
         if (!foundUser) return null;
 
