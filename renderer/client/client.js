@@ -1,233 +1,216 @@
 /**
- * =========================================================
- * CLIENTS.JS - CON VALIDACIÓN DE RFC Y FILTROS SEGUROS
- * =========================================================
+ * CLIENTS.JS - VERSIÓN FINAL REFORZADA
  */
 
-let permisosUsuario = [];
-let clientesCache = [];
-let editingId = null;
-let clientFormModal = null;
-
-let clientsModalEl, tableBody, btnNuevoCliente, searchInput, statusFilter;
-let clientFormModalEl, nombreInput, apPatInput, apMatInput, emailInput, telefonoInput, rfcInput, estatusInput, modalTitle;
-
-const cleanString = t => 
-    (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9@.\s]/g, "").trim();
-
-const normalize = t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-// Función para validar estructura básica de RFC (Física o Moral)
-const isValidRFC = rfc => {
-    const re = /^[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}$/;
-    return re.test(rfc.toUpperCase());
-};
-
-function bindClientsDOM() {
-    clientsModalEl = document.getElementById("clientsModal");
-    if (!clientsModalEl) return;
-
-    tableBody = document.getElementById("clients-table-body");
-    btnNuevoCliente = document.getElementById("btn-new-client");
-    searchInput = document.getElementById("client-search");
-    clientFormModalEl = document.getElementById("clientFormModal");
-    
-    if (clientFormModalEl) {
-        if (clientFormModal) clientFormModal.dispose();
-        clientFormModal = new bootstrap.Modal(clientFormModalEl);
-    }
-
-    nombreInput = document.getElementById("client-nombre");
-    apPatInput = document.getElementById("client-apellido-paterno");
-    apMatInput = document.getElementById("client-apellido-materno");
-    emailInput = document.getElementById("client-email");
-    telefonoInput = document.getElementById("client-telefono");
-    rfcInput = document.getElementById("client-rfc");
-    estatusInput = document.getElementById("client-estatus");
-    modalTitle = document.getElementById("clientFormTitle");
+// 1. LIMPIEZA DE EVENTOS PREVIOS (Evita que el sistema truene al reabrir)
+if (window.ClientsModule) {
+    document.removeEventListener("click", window.ClientsModule.handleClick);
+    document.removeEventListener("input", window.ClientsModule.handleInput);
 }
 
-function clearValidations() {
-    const fields = [nombreInput, apPatInput, apMatInput, telefonoInput, rfcInput];
-    fields.forEach(f => { if(f) f.classList.remove("is-invalid"); });
-    const msg = document.getElementById("error-message-client");
-    if (msg) {
-        msg.style.display = "none";
-        msg.textContent = "* Por favor, rellene los campos obligatorios correctamente.";
-    }
-}
+window.ClientsModule = {
+    cache: [],
+    editingId: null,
+    formModalInstance: null,
 
-function resetForm() {
-    editingId = null;
-    if (modalTitle) modalTitle.textContent = "Nuevo Cliente";
-    const fields = [nombreInput, apPatInput, apMatInput, emailInput, telefonoInput, rfcInput];
-    fields.forEach(f => { if (f) f.value = ""; });
-    if (estatusInput) estatusInput.checked = true;
-    clearValidations();
-}
+    // --- UTILIDADES ---
+    cleanString: t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9@.\s]/g, "").trim(),
+    normalize: t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
 
-function renderClientes(data) {
-    if (!tableBody) return;
-    tableBody.innerHTML = "";
-    if (!data || !data.length) {
-        tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No hay clientes</td></tr>`;
-        return;
-    }
-    let html = "";
-    data.forEach(c => {
-        html += `
+    // --- INICIALIZADOR ---
+    init: function() {
+        this.handleClick = this.handleClick.bind(this);
+        this.handleInput = this.handleInput.bind(this);
+        
+        document.addEventListener("click", this.handleClick);
+        document.addEventListener("input", this.handleInput);
+    },
+
+    // Obtener o crear instancia del modal de formulario
+    getFormModal: function() {
+        const el = document.getElementById("clientFormModal");
+        if (!el) return null;
+        if (!this.formModalInstance) {
+            this.formModalInstance = new bootstrap.Modal(el, { backdrop: 'static' });
+        }
+        return this.formModalInstance;
+    },
+
+    // --- CARGA DE DATOS CON SPINNER ---
+    load: async function() {
+        const loader = document.getElementById("clients-loading");
+        const tableEl = document.getElementById("clients-table-main");
+        const tbody = document.getElementById("clients-table-body");
+
+        // Encender visuales de carga
+        if (loader) loader.style.display = "block";
+        if (tableEl) tableEl.style.opacity = "0.2";
+        if (tbody) tbody.innerHTML = ""; 
+
+        const sql = `SELECT id, nombre, apellido_paterno, apellido_materno,
+            TRIM(nombre || ' ' || IFNULL(apellido_paterno,'') || ' ' || IFNULL(apellido_materno,'')) AS nombre_completo,
+            email, telefono, rfc, estatus FROM clients ORDER BY id ASC`;
+
+        try {
+            this.cache = await window.electronAPI.invoke("db-query", { sql });
+            this.render(this.cache);
+        } catch (e) { 
+            console.error("Error DB:", e);
+            if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar datos</td></tr>`;
+        } finally {
+            // Apagar visuales de carga
+            if (loader) loader.style.display = "none";
+            if (tableEl) tableEl.style.opacity = "1";
+        }
+    },
+
+    render: function(data) {
+        const tbody = document.getElementById("clients-table-body");
+        if (!tbody) return;
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No se encontraron clientes</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(c => `
             <tr>
                 <td>${c.id}</td>
-                <td>${c.nombre_completo}</td>
+                <td class="fw-bold">${c.nombre_completo}</td>
                 <td>${c.email || "-"}</td>
                 <td>${c.telefono || "-"}</td>
                 <td>${c.rfc || "-"}</td>
-                <td><span class="badge ${Number(c.estatus) === 1 ? "bg-success" : "bg-secondary"}">${Number(c.estatus) === 1 ? "Activo" : "Inactivo"}</span></td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-warning btn-edit" data-id="${c.id}"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-outline-danger btn-delete ms-1" data-id="${c.id}"><i class="fas fa-trash"></i></button>
+                <td><span class="badge ${c.estatus == 1 ? "bg-success" : "bg-secondary"}">
+                    ${c.estatus == 1 ? "Activo" : "Inactivo"}</span>
                 </td>
-            </tr>`;
-    });
-    tableBody.innerHTML = html;
-}
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-warning btn-edit" data-id="${c.id}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            </tr>`).join('');
+    },
 
-async function loadClientes() {
-    if (!document.getElementById("clientsModal")) return;
-    const sql = `SELECT id, nombre, apellido_paterno, apellido_materno,
-        TRIM(nombre || ' ' || IFNULL(apellido_paterno,'') || ' ' || IFNULL(apellido_materno,'')) AS nombre_completo,
-        email, telefono, rfc, estatus FROM clients`;
-    clientesCache = await window.electronAPI.invoke("db-query", { sql });
-    applyFilters();
-}
-
-function applyFilters() {
-    let data = [...clientesCache];
-    const sInput = document.getElementById("client-search");
-    const term = normalize(sInput?.value);
-    if (term) {
-        data = data.filter(c => normalize(c.nombre_completo).includes(term) || normalize(c.email).includes(term));
-    }
-    renderClientes(data);
-}
-
-// --- EVENTOS ---
-
-document.addEventListener("shown.bs.modal", async (e) => {
-    if (e.target.id === "profileModal") return; // Evitar choque con perfil
-    if (e.target.id === "clientsModal") { 
-        bindClientsDOM();
-        await loadClientes();
-    }
-});
-
-document.addEventListener("click", async (e) => {
-    if (e.target.closest("#btn-new-client")) {
-        resetForm();
-        if (clientFormModal) clientFormModal.show();
-    }
-
-    const btnEdit = e.target.closest(".btn-edit");
-    if (btnEdit) {
-        resetForm();
-        const id = Number(btnEdit.dataset.id);
-        const c = clientesCache.find(x => x.id === id);
-        if (c) {
-            editingId = id;
-            if (modalTitle) modalTitle.textContent = "Editar Cliente";
-            nombreInput.value = c.nombre || "";
-            apPatInput.value = c.apellido_paterno || "";
-            apMatInput.value = c.apellido_materno || "";
-            emailInput.value = c.email || "";
-            telefonoInput.value = c.telefono || "";
-            rfcInput.value = c.rfc || "";
-            estatusInput.checked = Number(c.estatus) === 1;
-            clientFormModal.show();
-        }
-    }
-
-    if (e.target.closest("#btn-save-client")) {
-        clearValidations();
-        let hasError = false;
-
-        const nombre = cleanString(nombreInput.value);
-        const apPat = cleanString(apPatInput.value);
-        const apMat = cleanString(apMatInput.value);
-        const telefono = telefonoInput.value.replace(/\D/g, "");
-        const rfcValue = rfcInput.value.trim().toUpperCase();
+    // --- GUARDADO ---
+    save: async function() {
+        const modal = document.getElementById("clientFormModal");
         const msgError = document.getElementById("error-message-client");
+        const f = {
+            n: modal.querySelector("#client-nombre"),
+            ap: modal.querySelector("#client-apellido-paterno"),
+            am: modal.querySelector("#client-apellido-materno"),
+            em: modal.querySelector("#client-email"),
+            tel: modal.querySelector("#client-telefono"),
+            rfc: modal.querySelector("#client-rfc"),
+            est: modal.querySelector("#client-estatus")
+        };
 
-        // Validaciones obligatorias
-        if (!nombre) { nombreInput.classList.add("is-invalid"); hasError = true; }
-        if (!apPat) { apPatInput.classList.add("is-invalid"); hasError = true; }
-        if (!apMat) { apMatInput.classList.add("is-invalid"); hasError = true; }
-        if (telefono.length !== 10) { telefonoInput.classList.add("is-invalid"); hasError = true; }
+        let err = false;
+        modal.querySelectorAll(".is-invalid").forEach(i => i.classList.remove("is-invalid"));
+
+        if(!this.cleanString(f.n.value)){ f.n.classList.add("is-invalid"); err=true; }
+        if(!this.cleanString(f.ap.value)){ f.ap.classList.add("is-invalid"); err=true; }
+        if (f.tel.value.replace(/\D/g, "").length !== 10) { f.tel.classList.add("is-invalid"); err=true; }
         
-        // Validación opcional de RFC (si se escribe algo, debe ser válido)
-        if (rfcValue && !isValidRFC(rfcValue)) {
-            rfcInput.classList.add("is-invalid");
-            hasError = true;
-            if (msgError) msgError.textContent = "* El formato del RFC es incorrecto.";
-        }
-
-        if (hasError) {
-            if (msgError) msgError.style.display = "block";
+        if (err) {
+            msgError.textContent = "* Rellene los campos obligatorios.";
+            msgError.style.display = "block";
             return;
         }
 
         const params = [
-            nombre, apPat, apMat, emailInput.value.trim().toLowerCase(), 
-            telefono, rfcValue,
-            estatusInput.checked ? 1 : 0
+            this.cleanString(f.n.value), this.cleanString(f.ap.value), this.cleanString(f.am.value), 
+            f.em.value.trim().toLowerCase(), f.tel.value.replace(/\D/g, ""), 
+            f.rfc.value.trim().toUpperCase(), f.est.checked ? 1 : 0
         ];
 
-        const sql = editingId 
-            ? `UPDATE clients SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?, rfc=?, estatus=? WHERE id=${editingId}`
+        const sql = this.editingId 
+            ? `UPDATE clients SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?, rfc=?, estatus=? WHERE id = ${this.editingId}`
             : `INSERT INTO clients (nombre, apellido_paterno, apellido_materno, email, telefono, rfc, estatus) VALUES (?,?,?,?,?,?,?)`;
 
         try {
             await window.electronAPI.invoke("db-run", { sql, params });
-            clientFormModal.hide();
-            await loadClientes();
-        } catch (error) {
-            if (error.message.includes("UNIQUE constraint failed")) {
-                if (msgError) {
-                    msgError.textContent = "* El RFC o Email ya existen.";
-                    msgError.style.display = "block";
+            this.getFormModal().hide();
+            await this.load();
+        } catch (e) {
+            msgError.textContent = "* El RFC o Email ya existen.";
+            msgError.style.display = "block";
+        }
+    },
+
+    // --- MANEJADORES DE EVENTOS ---
+    handleClick: function(e) {
+        const btnEdit = e.target.closest(".btn-edit");
+        const btnNew = e.target.closest("#btn-new-client");
+        const btnSave = e.target.closest("#btn-save-client");
+
+        if (btnNew || btnEdit) {
+            this.editingId = btnEdit ? Number(btnEdit.dataset.id) : null;
+            const modal = document.getElementById("clientFormModal");
+            
+            modal.querySelectorAll(".is-invalid").forEach(i => i.classList.remove("is-invalid"));
+            document.getElementById("error-message-client").style.display = "none";
+            
+            if (!this.editingId) {
+                modal.querySelector("#clientFormTitle").textContent = "Nuevo Cliente";
+                modal.querySelectorAll("input:not([type='checkbox'])").forEach(i => i.value = "");
+                modal.querySelector("#client-estatus").checked = true;
+            } else {
+                const c = this.cache.find(x => x.id === this.editingId);
+                if(c) {
+                    modal.querySelector("#clientFormTitle").textContent = `Editar Cliente #${this.editingId}`;
+                    modal.querySelector("#client-nombre").value = c.nombre || "";
+                    modal.querySelector("#client-apellido-paterno").value = c.apellido_paterno || "";
+                    modal.querySelector("#client-apellido-materno").value = c.apellido_materno || "";
+                    modal.querySelector("#client-email").value = c.email || "";
+                    modal.querySelector("#client-telefono").value = c.telefono || "";
+                    modal.querySelector("#client-rfc").value = c.rfc || "";
+                    modal.querySelector("#client-estatus").checked = c.estatus == 1;
                 }
             }
+            this.getFormModal().show();
+        }
+
+        if (btnSave) this.save();
+    },
+
+    handleInput: function(e) {
+        if (e.target.classList.contains("is-invalid")) e.target.classList.remove("is-invalid");
+
+        if (e.target.id === "client-search") {
+            const term = this.normalize(e.target.value);
+            const filtered = this.cache.filter(c => 
+                this.normalize(c.nombre_completo || "").includes(term) || 
+                this.normalize(c.email || "").includes(term) || 
+                this.normalize(c.rfc || "").includes(term) || 
+                this.normalize(c.telefono || "").includes(term)
+            );
+            this.render(filtered);
+        }
+        
+        if (e.target.id === "client-rfc") {
+            e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9&Ñ]/g, "").substring(0, 13);
         }
     }
+};
 
-    const btnDel = e.target.closest(".btn-delete");
-    if (btnDel) {
-        const id = Number(btnDel.dataset.id);
-        if (confirm("¿Desactivar cliente?")) {
-            await window.electronAPI.invoke("db-run", { sql: "UPDATE clients SET estatus = 0 WHERE id=?", params: [id] });
-            await loadClientes();
-        }
+// Iniciar módulo al cargar el archivo
+window.ClientsModule.init();
+
+// GESTIÓN DE APERTURA DESDE EL MODAL PRINCIPAL
+document.addEventListener("show.bs.modal", (e) => {
+    if (e.target.id === "clientsModal") {
+        const loader = document.getElementById("clients-loading");
+        const tableEl = document.getElementById("clients-table-main");
+        if (loader) loader.style.display = "block";
+        if (tableEl) tableEl.style.opacity = "0.2";
     }
 });
 
-// Validación y formato en tiempo real
-document.addEventListener("input", e => {
-    if (e.target.id === "client-search") applyFilters();
-
-    // Formatear RFC automáticamente
-    if (e.target.id === "client-rfc") {
-        let val = e.target.value.toUpperCase().replace(/[^A-Z0-9&Ñ]/g, "");
-        if (val.length > 13) val = val.substring(0, 13);
-        e.target.value = val;
-    }
-
-    // Quitar marcas de error al escribir
-    if (e.target.classList.contains("is-invalid")) {
-        e.target.classList.remove("is-invalid");
+document.addEventListener("shown.bs.modal", (e) => {
+    if (e.target.id === "clientsModal") {
+        const searchInput = document.getElementById("client-search");
+        if (searchInput) searchInput.value = "";
+        window.ClientsModule.load();
     }
 });
-
-(async () => {
-    const session = await window.electronAPI.invoke("get-user-session");
-    permisosUsuario = (session?.permisos || []).map(p => p.id);
-    bindClientsDOM();
-})();

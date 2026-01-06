@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addSaleButton = document.getElementById('add-sale-tab');
     const profileBtn = document.getElementById('profile-btn');
     const clientBtn = document.getElementById('client-btn');
+    const supplierBtn = document.getElementById('supplier-btn');
 
     const MAX_SALES = 15;
     let globalSaleCounter = 1;
@@ -320,6 +321,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         clientBtn.addEventListener('click', (e) => {
             e.preventDefault();
             loadModalModule('client');
+        });
+    }
+
+    // Listener para abrir el proveedor
+    if (supplierBtn) {
+        supplierBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            loadModalModule('supplier');
         });
     }
 

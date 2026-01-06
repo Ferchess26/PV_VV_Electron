@@ -95,10 +95,22 @@ function initializeDatabase() {
     codigo_postal TEXT,
     estatus INTEGER DEFAULT 1,
     fecha_creacion TEXT DEFAULT (datetime('now'))
-);
-    `);
+    );`
+  );
 
-
+  // 10. Tabla PROVEEDORES
+  db.exec(`CREATE TABLE IF NOT EXISTS suppliers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre_empresa TEXT NOT NULL,         -- Ejemplo: "Ferretería Industrial S.A."
+    contacto_nombre TEXT,                 -- Ejemplo: "Ing. Alberto Ruiz"
+    email TEXT UNIQUE,
+    telefono TEXT,
+    rfc TEXT UNIQUE,                      -- RFC del proveedor
+    direccion TEXT,
+    estatus INTEGER DEFAULT 1,            -- 1: Activo, 0: Inactivo
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`
+  );
 
   // =========================================================
   // INSERCIÓN DE DATOS INICIALES (SEEDING)

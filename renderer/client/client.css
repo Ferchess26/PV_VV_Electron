@@ -1,177 +1,76 @@
-/* =========================================================
-   CLIENTS MODULE STYLES
-========================================================= */
-
-/* =========================
-   HEADER DEL MODAL
-========================= */
-.modal-header-clients {
-    background-color: #1A365D !important;
-    color: white;
-    border-bottom: 1px solid #1A365D;
+/* HEADER */
+.modal-header-clients { 
+    background-color: #1A365D !important; 
+    color: white; 
+}
+.modal-header-clients .btn-close-white { 
+    filter: invert(1) brightness(200%); 
 }
 
-/* Botón cerrar blanco */
-.modal-header-clients .btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
+/* ESTRUCTURA MODAL PRINCIPAL */
+#clientsModal .modal-content { 
+    height: 85vh; 
+    display: flex; 
+    flex-direction: column; 
+    border-radius: 12px;
+}
+#clientsModal .modal-body { 
+    flex: 1; 
+    overflow: hidden; 
+    display: flex; 
+    flex-direction: column; 
+    padding: 1.5rem; 
 }
 
-/* =========================
-   ESTRUCTURA DEL MODAL
-========================= */
-
-/* Limita la altura total del modal */
-#clientsModal .modal-dialog {
-    max-height: 85vh;
+/* BÚSQUEDA */
+.client-search-input { 
+    width: 400px; 
+    max-width: 100%; 
+    border-radius: 25px; 
 }
 
-/* Modal como layout flexible */
-#clientsModal .modal-content {
-    height: 85vh;
-    display: flex;
-    flex-direction: column;
+/* TABLA CON HEADER FIJO */
+#clientsModal .table-responsive { 
+    flex: 1; 
+    overflow-y: auto; 
+    position: relative; 
+    min-height: 300px; 
+}
+#clientsModal .clients-table thead th { 
+    position: sticky; 
+    top: 0; 
+    background-color: #f1f5f9; 
+    z-index: 2; 
+    color: #1A365D; 
+    border-bottom: 2px solid #e2e8f0;
+}
+.clients-table tbody tr:hover { 
+    background-color: rgba(0, 188, 212, 0.05); 
 }
 
-/* Body NO hace scroll */
-#clientsModal .modal-body {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    padding: 1.5rem;
+/* SPINNER DE CARGA */
+#clients-loading { 
+    display: none; 
+    position: absolute; 
+    left: 50%; 
+    top: 50%; 
+    transform: translate(-50%, -50%); 
+    z-index: 100; 
+    text-align: center;
 }
 
-/* =========================
-   INPUT DE BÚSQUEDA
-========================= */
-.client-search-input {
-    width: 400px;
-    max-width: 100%;
-    border-radius: 25px;
-    padding-left: 18px;
+/* MODAL DE FORMULARIO */
+.client-form-content { 
+    border: 2px solid #1A365D; 
+    border-radius: 10px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+}
+#clientFormModal .form-control:focus { 
+    border-color: #00BCD4; 
+    box-shadow: 0 0 0 0.25rem rgba(0, 188, 212, 0.15); 
 }
 
-/* =========================
-   TABLA CLIENTES
-========================= */
-
-/* Contenedor con scroll */
-#clientsModal .table-responsive {
-    flex: 1;
-    overflow-y: auto;
-}
-
-/* Header fijo */
-#clientsModal .clients-table thead th {
-    position: sticky;
-    top: 0;
-    background-color: #f1f5f9;
-    z-index: 2;
-}
-
-/* Estilos tabla */
-.clients-table thead {
-    background-color: #f1f5f9;
-}
-
-.clients-table th {
-    font-weight: 600;
-    color: #1A365D;
-    white-space: nowrap;
-}
-
-.clients-table td {
-    vertical-align: middle;
-    font-size: 0.95rem;
-}
-
-/* Hover filas */
-.clients-table tbody tr:hover {
-    background-color: rgba(0, 188, 212, 0.08);
-}
-
-/* =========================
-   BADGES
-========================= */
-.clients-table .badge {
-    font-size: 0.75rem;
-    padding: 6px 10px;
-}
-
-/* =========================
-   BOTONES
-========================= */
-
-/* Botón nuevo cliente */
-#btn-new-client {
-    border-color: #00BCD4;
-    color: #00BCD4;
-}
-
-#btn-new-client:hover {
-    background-color: #00BCD4;
-    color: white;
-}
-
-/* Editar */
-.btn-edit-client {
-    border-color: #facc15;
-    color: #ca8a04;
-}
-
-.btn-edit-client:hover {
-    background-color: #facc15;
-    color: #1f2937;
-}
-
-/* Eliminar */
-.btn-delete-client {
-    border-color: #ef4444;
-    color: #dc2626;
-}
-
-.btn-delete-client:hover {
-    background-color: #ef4444;
-    color: white;
-}
-
-/* =========================
-   FORMULARIO CREAR/EDITAR
-========================= */
-
-/* Contorno del modal de formulario */
-.client-form-content {
-    border: 2px solid #1A365D; /* Borde del mismo color que el header */
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    height: auto !important; /* A diferencia del principal, este se ajusta al contenido */
-}
-
-/* Estilo para los labels del formulario */
-#clientFormModal .form-label {
-    color: #1A365D;
-    font-size: 0.9rem;
-}
-
-/* Ajuste de inputs para que se vean más limpios */
-#clientFormModal .form-control:focus {
-    border-color: #00BCD4;
-    box-shadow: 0 0 0 0.25rem rgba(0, 188, 212, 0.25);
-}
-
-/* Separación opcional en el footer */
-#clientFormModal .modal-footer {
-    padding: 1rem 1.5rem;
-    background-color: #f8fafc;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
+/* RESPONSIVE */
 @media (max-width: 768px) {
-    .client-search-input {
-        width: 100%;
-    }
+    .client-search-input { width: 100%; }
 }

@@ -1,0 +1,11 @@
+.bg-navy-supplier { background-color: #1A365D !important; }
+.border-navy-supplier { border: 2px solid #1A365D; border-radius: 8px; }
+.btn-save-navy { background-color: #1A365D !important; border: none; }
+
+.modal-supplier-fixed { height: 85vh; display: flex; flex-direction: column; border-radius: 12px; }
+.pill-search { width: 400px; max-width: 100%; border-radius: 25px; padding-left: 15px; }
+
+.supplier-scroll-area { flex: 1; overflow-y: auto; position: relative; min-height: 250px; }
+#supplier-table-main thead th { position: sticky; top: 0; background-color: #f8fafc; z-index: 2; color: #1A365D; border-bottom: 2px solid #e2e8f0; }
+
+.spinner-overlay { display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 10; text-align: center; }

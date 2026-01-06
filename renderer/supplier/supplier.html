@@ -1,0 +1,86 @@
+<div class="modal fade" id="supplierModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg modal-supplier-fixed">
+            <div class="modal-header bg-navy-supplier">
+                <h5 class="modal-title text-white"><i class="fas fa-truck me-2"></i> Proveedores</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <input type="text" id="supplier-search" class="form-control pill-search" placeholder="🔍 Buscar por empresa, contacto o RFC...">
+                    <button type="button" class="btn btn-outline-primary fw-bold" id="btn-new-supplier">
+                        <i class="fas fa-plus me-1"></i> Nuevo Proveedor
+                    </button>
+                </div>
+                <div class="table-responsive supplier-scroll-area">
+                    <div id="supplier-loading" class="spinner-overlay">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 fw-bold">Cargando proveedores...</p>
+                    </div>
+                    <table class="table table-hover align-middle" id="supplier-table-main">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Empresa</th>
+                                <th>Contacto</th>
+                                <th>Teléfono</th>
+                                <th>RFC</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplier-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="supplierFormModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-navy-supplier">
+            <div class="modal-header bg-navy-supplier">
+                <h5 class="modal-title text-white" id="supplierFormTitle">Nuevo Proveedor</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre de la Empresa <span class="text-danger">*</span></label>
+                    <input type="text" id="supp-empresa" class="form-control" placeholder="Ej. Laboratorios Zoetis">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Nombre del Contacto</label>
+                    <input type="text" id="supp-contacto" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Teléfono</label>
+                        <input type="text" id="supp-tel" class="form-control" maxlength="10">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">RFC</label>
+                        <input type="text" id="supp-rfc" class="form-control" maxlength="13">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Email de Pedidos</label>
+                    <input type="email" id="supp-email" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Dirección Completa</label>
+                    <textarea id="supp-direccion" class="form-control" rows="2" placeholder="Calle, número, colonia, CP..."></textarea>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="supp-estatus" checked>
+                    <label class="form-check-label fw-bold" for="supp-estatus">Proveedor Activo</label>
+                </div>
+                <div id="error-message-supplier" class="text-danger small mt-3 fw-bold" style="display: none;"></div>
+            </div>
+            <div class="modal-footer border-0">
+                <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary px-4 btn-save-navy" id="btn-save-supplier">Guardar Proveedor</button>
+            </div>
+        </div>
+    </div>
+</div>
