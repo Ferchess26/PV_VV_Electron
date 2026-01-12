@@ -143,6 +143,45 @@ function initializeDatabase() {
       );`
   );
 
+  // 13. Tabla UNIDADES_MEDIDA (Unidades de productos)
+  db.exec(`
+      CREATE TABLE IF NOT EXISTS unidades_medida (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL UNIQUE,
+        abreviatura TEXT NOT NULL
+      );`
+  );
+
+  // 14. Tabla CATEGORIES (Categorías de productos)
+  db.exec(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL UNIQUE,
+        color TEXT DEFAULT '#1A365D'
+      );`
+  );
+
+  // 15. Tabla PRODUCTS (Catálogo de productos e inventario)
+  db.exec(`
+      CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo_barras TEXT UNIQUE,
+        nombre TEXT NOT NULL,
+        descripcion TEXT,
+        id_categoria INTEGER,
+        id_unidad_medida INTEGER,
+        precio_compra REAL DEFAULT 0,
+        precio_venta REAL NOT NULL,
+        stock_actual INTEGER DEFAULT 0,
+        stock_minimo INTEGER DEFAULT 5,
+        imagen_path TEXT,
+        estatus INTEGER DEFAULT 1,
+        fecha_creacion TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (id_categoria) REFERENCES categories(id),
+        FOREIGN KEY (id_unidad_medida) REFERENCES unidades_medida(id)
+      );`
+  );
+
   // =========================================================
   // INSERCIÓN DE DATOS INICIALES (SEEDING)
   // =========================================================
