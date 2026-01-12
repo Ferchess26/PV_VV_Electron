@@ -1,0 +1,103 @@
+<div class="modal fade" id="calendarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg calendar-modal-content">
+            <div class="modal-header" style="background-color: #1A365D; color: white;">
+                <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i> Agenda de Citas</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="calendar-layout">
+                    <div class="calendar-day-panel">
+                        <div class="p-3 bg-white border-bottom shadow-sm">
+                            <button class="btn btn-primary w-100 fw-bold" id="btn-quick-event" style="background-color: #1A365D; border: none;">NUEVA CITA</button>
+                        </div>
+                        <div class="p-3 text-center border-bottom">
+                            <div class="text-uppercase small text-muted">Citas de</div>
+                            <strong id="current-day-label" class="text-primary">-</strong>
+                        </div>
+                        <div class="day-events-container flex-grow-1 overflow-auto p-2">
+                            <ul class="list-group list-group-flush" id="day-events-list"></ul>
+                        </div>
+                    </div>
+                    <div class="calendar-main">
+                        <div id="calendar-view"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="calendarFormModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header text-white" style="background-color: #1A365D;">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i> Detalles de la Cita</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="form-grid">
+                    <div class="full-width position-relative">
+                        <label class="form-label fw-bold small">CLIENTE (NOMBRE)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" class="form-control" id="cal-client-search" placeholder="Escribe nombre o busca existente...">
+                        </div>
+                        <input type="hidden" id="cal-client-id">
+                        <ul class="list-group position-absolute w-100 shadow d-none" id="client-results" style="z-index: 1100;"></ul>
+                    </div>
+
+                    <div class="full-width">
+                        <label class="form-label fw-bold small">TELÉFONO DE CONTACTO</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                            <input type="text" class="form-control" id="cal-phone" placeholder="Ej: 5512345678">
+                        </div>
+                    </div>
+
+                    <div class="full-width">
+                        <label class="form-label fw-bold small">TIPO DE SERVICIO</label>
+                        <div class="input-group">
+                            <select class="form-select" id="cal-type-id"></select>
+                            <button class="btn btn-dark" type="button" id="btn-add-type"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+
+                    <div id="new-type-form" class="d-none">
+                        <input type="text" id="new-type-name" class="form-control form-control-sm" placeholder="Servicio">
+                        <input type="color" id="new-type-color" class="form-control-color" value="#1A365D">
+                        <button class="btn btn-sm btn-success" id="btn-save-new-type"><i class="fas fa-check"></i></button>
+                    </div>
+
+                    <div>
+                        <label class="form-label fw-bold small">FECHA</label>
+                        <input type="date" class="form-control" id="cal-date">
+                    </div>
+                    <div class="d-flex align-items-end pb-1">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="cal-status-switch" checked>
+                            <label class="form-check-label small fw-bold">ACTIVA</label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="form-label fw-bold small">INICIO</label>
+                        <select class="form-select" id="cal-start-time"></select>
+                    </div>
+                    <div>
+                        <label class="form-label fw-bold small">FIN</label>
+                        <select class="form-select" id="cal-end-time"></select>
+                    </div>
+
+                    <div class="full-width">
+                        <label class="form-label fw-bold small">OBSERVACIONES / MOTIVO</label>
+                        <textarea class="form-control" id="cal-notes" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-primary w-100 py-2 fw-bold" id="btn-save-calendar" style="background-color: #1A365D; border: none;">GUARDAR CITA</button>
+            </div>
+        </div>
+    </div>
+</div>

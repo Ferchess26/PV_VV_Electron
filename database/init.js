@@ -112,6 +112,37 @@ function initializeDatabase() {
     );`
   );
 
+  // 11. Tabla TIPOS_CITA (Catálogo de tipos de cita)
+  db.exec(`
+      CREATE TABLE IF NOT EXISTS tipos_cita (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          nombre TEXT NOT NULL,
+          color TEXT NOT NULL,
+          estatus INTEGER DEFAULT 1,
+          fecha_creacion TEXT DEFAULT (datetime('now'))
+      );`
+  );
+
+  // 12. Tabla CALENDAR (Agenda de citas)
+  db.exec(`
+      CREATE TABLE IF NOT EXISTS calendar (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_cliente INTEGER NULL,
+        id_tipo_cita INTEGER NOT NULL,
+        nombre_cliente TEXT NOT NULL,        
+        titulo TEXT,                         
+        observaciones TEXT,
+        telefono_contacto TEXT,
+        usuario_creador INTEGER NOT NULL,    
+        fecha_inicio TEXT NOT NULL,
+        fecha_fin TEXT NOT NULL,
+        estatus INTEGER DEFAULT 1,
+        fecha_creacion TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (id_cliente) REFERENCES clients(id) ON DELETE SET NULL,
+        FOREIGN KEY (id_tipo_cita) REFERENCES tipos_cita(id)
+      );`
+  );
+
   // =========================================================
   // INSERCIÓN DE DATOS INICIALES (SEEDING)
   // =========================================================
