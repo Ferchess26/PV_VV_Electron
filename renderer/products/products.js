@@ -60,7 +60,6 @@ window.ProductsModule = {
             const alertElement = alertWrapper.querySelector('.alert');
             alertElement.classList.add('alert-danger', 'alert-fixed-bottom-left', 'fade');
             
-            // CORRECCIÓN DE Z-INDEX PARA ESTAR FRENTE AL MODAL
             alertElement.style.zIndex = "9999";
             alertElement.style.position = "fixed";
             
@@ -71,14 +70,15 @@ window.ProductsModule = {
                 alertElement.classList.remove('show');
                 setTimeout(() => { alertElement.remove(); }, 500);
             }, 2500);
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            /* Error silencioso */ 
+        }
     },
 
     handleImage(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // VALIDACIÓN DE TIPO DE ARCHIVO
         if (!file.type.startsWith('image/')) {
             this.showToast("Solo se permiten archivos de imagen.");
             e.target.value = "";
@@ -88,7 +88,6 @@ window.ProductsModule = {
         this.selectedImage = file;
         const reader = new FileReader();
         reader.onload = ev => {
-            // TAMAÑO UNIFORME EN PREVISUALIZACIÓN
             document.getElementById("prod-img-preview").innerHTML = `
                 <img src="${ev.target.result}" class="img-fluid rounded border" 
                 style="width: 140px; height: 140px; object-fit: cover;">
@@ -98,8 +97,9 @@ window.ProductsModule = {
     },
 
     loadDependencies: async function () {
-        const cats = await window.electronAPI.invoke("db-query", { sql: "SELECT * FROM categories ORDER BY nombre" });
-        const units = await window.electronAPI.invoke("db-query", { sql: "SELECT * FROM unidades_medida ORDER BY nombre" });
+        const cats = await window.electronAPI.invoke("categories:list");
+        const units = await window.electronAPI.invoke("units:list");
+        
         document.getElementById("prod-category").innerHTML = `<option value="">----------</option>` + cats.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("");
         document.getElementById("prod-unit").innerHTML = `<option value="">----------</option>` + units.map(u => `<option value="${u.id}">${u.abreviatura}</option>`).join("");
     },
@@ -108,7 +108,8 @@ window.ProductsModule = {
         const input = document.getElementById("new-category-name");
         const name = input.value.trim();
         if(!name) return;
-        await window.electronAPI.invoke("db-run", { sql: "INSERT INTO categories (nombre) VALUES (?)", params: [name] });
+        
+        await window.electronAPI.invoke("categories:quick-save", name);
         input.value = "";
         document.getElementById("new-category-box").classList.add("d-none");
         await this.loadDependencies();
@@ -120,16 +121,15 @@ window.ProductsModule = {
         const name = nameInput.value.trim();
         const abbr = abbrInput.value.trim();
         if(!name || !abbr) return;
-        await window.electronAPI.invoke("db-run", { sql: "INSERT INTO unidades_medida (nombre, abreviatura) VALUES (?, ?)", params: [name, abbr] });
+        
+        await window.electronAPI.invoke("units:quick-save", { nombre: name, abreviatura: abbr });
         nameInput.value = ""; abbrInput.value = "";
         document.getElementById("new-unit-box").classList.add("d-none");
         await this.loadDependencies();
     },
 
     loadProducts: async function () {
-        const rows = await window.electronAPI.invoke("db-query", {
-            sql: `SELECT p.*, c.nombre cat, u.abreviatura uni FROM products p LEFT JOIN categories c ON p.id_categoria=c.id LEFT JOIN unidades_medida u ON p.id_unidad_medida=u.id`
-        });
+        const rows = await window.electronAPI.invoke("products:list");
         this.cache = rows;
         this.render(rows);
     },
@@ -230,25 +230,22 @@ window.ProductsModule = {
             }
         }
 
-        const params = [
-            document.getElementById("prod-barcode").value || null,
-            productName,
-            document.getElementById("prod-desc").value || null,
-            category,
-            unit,
-            Number(document.getElementById("prod-price-buy").value || 0),
-            Number(priceSell),
-            Number(document.getElementById("prod-stock").value || 0),
-            Number(document.getElementById("prod-stock-min").value || 5),
-            document.getElementById("prod-estatus").checked ? 1 : 0,
-            imagePath
-        ];
+        const productData = {
+            id: this.editingId,
+            codigo_barras: document.getElementById("prod-barcode").value || null,
+            nombre: productName,
+            descripcion: document.getElementById("prod-desc").value || null,
+            id_categoria: category ? Number(category) : null,
+            id_unidad_medida: unit ? Number(unit) : null,
+            precio_compra: Number(document.getElementById("prod-price-buy").value || 0),
+            precio_venta: Number(priceSell),
+            stock_actual: Number(document.getElementById("prod-stock").value || 0),
+            stock_minimo: Number(document.getElementById("prod-stock-min").value || 5),
+            estatus: document.getElementById("prod-estatus").checked ? 1 : 0,
+            imagen_path: imagePath
+        };
 
-        const sql = this.editingId
-            ? `UPDATE products SET codigo_barras=?, nombre=?, descripcion=?, id_categoria=?, id_unidad_medida=?, precio_compra=?, precio_venta=?, stock_actual=?, stock_minimo=?, estatus=?, imagen_path=? WHERE id=${this.editingId}`
-            : `INSERT INTO products (codigo_barras,nombre,descripcion,id_categoria,id_unidad_medida,precio_compra,precio_venta,stock_actual,stock_minimo,estatus,imagen_path) VALUES (?,?,?,?,?,?,?,?,?,?,?)`;
-
-        await window.electronAPI.invoke("db-run", { sql, params });
+        await window.electronAPI.invoke("products:save", productData);
         this.modalForm.hide();
         await this.loadProducts();
     },

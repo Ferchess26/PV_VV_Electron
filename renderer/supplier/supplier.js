@@ -1,8 +1,8 @@
 /**
- * SUPPLIER.JS - VERSIÓN FINAL CORREGIDA
+ * SUPPLIER.JS - VERSIÓN FINAL REFORZADA
  */
 
-// 1. Limpieza de eventos anteriores para evitar duplicidad
+// 1. Limpieza de eventos anteriores
 if (window.SupplierModule) {
     document.removeEventListener("click", window.SupplierModule.handleClick);
     document.removeEventListener("input", window.SupplierModule.handleInput);
@@ -13,7 +13,6 @@ window.SupplierModule = {
     editingId: null,
     instance: null,
 
-    // Inicializador
     init: function() {
         this.handleClick = this.handleClick.bind(this);
         this.handleInput = this.handleInput.bind(this);
@@ -22,15 +21,13 @@ window.SupplierModule = {
         document.addEventListener("input", this.handleInput);
     },
 
-    // Obtener instancia del modal de Bootstrap
     getModal: function() {
         const el = document.getElementById("supplierFormModal");
         if (!el) return null;
-        if (!this.instance) this.instance = new bootstrap.Modal(el);
+        if (!this.instance) this.instance = new bootstrap.Modal(el, { backdrop: 'static' });
         return this.instance;
     },
 
-    // Generar el HTML de las filas (se usa en load y en search)
     generateRowHTML: function(s) {
         return `
             <tr>
@@ -48,7 +45,6 @@ window.SupplierModule = {
             </tr>`;
     },
 
-    // Limpiar formulario
     resetForm: function() {
         this.editingId = null;
         const modalEl = document.getElementById("supplierFormModal");
@@ -61,34 +57,34 @@ window.SupplierModule = {
         });
         
         document.getElementById("supplierFormTitle").textContent = "Nuevo Proveedor";
-        document.getElementById("error-message-supplier").style.display = "none";
+        const errorMsg = document.getElementById("error-message-supplier");
+        if(errorMsg) errorMsg.style.display = "none";
     },
 
-    // Cargar datos de la BD
     load: async function() {
         const tbody = document.getElementById("supplier-table-body");
         if (!tbody) return;
 
         try {
-            const sql = `SELECT * FROM suppliers ORDER BY id ASC`;
-            this.cache = await window.electronAPI.invoke("db-query", { sql });
+            // USANDO EL NUEVO HANDLER ESPECÍFICO
+            this.cache = await window.electronAPI.invoke("suppliers:list");
             this.render(this.cache);
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            // Error silencioso en terminal, ya no imprime la query
+        }
     },
 
-    // Renderizar datos en la tabla
     render: function(data) {
         const tbody = document.getElementById("supplier-table-body");
         if (!tbody) return;
         
-        if (data.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No se encontraron resultados</td></tr>`;
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">No se encontraron resultados</td></tr>`;
             return;
         }
         tbody.innerHTML = data.map(s => this.generateRowHTML(s)).join('');
     },
 
-    // Guardar
     save: async function() {
         const modalEl = document.getElementById("supplierFormModal");
         const f = {
@@ -106,31 +102,41 @@ window.SupplierModule = {
             return;
         }
 
-        const params = [
-            f.empresa.value.trim(), f.contacto.value.trim(), f.email.value.trim().toLowerCase(),
-            f.tel.value.replace(/\D/g, ""), f.rfc.value.trim().toUpperCase(), f.dir.value.trim(),
-            f.est.checked ? 1 : 0
-        ];
-
-        const sql = this.editingId 
-            ? `UPDATE suppliers SET nombre_empresa=?, contacto_nombre=?, email=?, telefono=?, rfc=?, direccion=?, estatus=? WHERE id = ${this.editingId}`
-            : `INSERT INTO suppliers (nombre_empresa, contacto_nombre, email, telefono, rfc, direccion, estatus) VALUES (?,?,?,?,?,?,?)`;
+        // OBJETO MAPEADO PARA EL HANDLER
+        const supplierData = {
+            id: this.editingId,
+            nombre_empresa: f.empresa.value.trim(),
+            contacto_nombre: f.contacto.value.trim(),
+            email: f.email.value.trim().toLowerCase(),
+            telefono: f.tel.value.replace(/\D/g, ""),
+            rfc: f.rfc.value.trim().toUpperCase(),
+            direccion: f.dir.value.trim(),
+            estatus: f.est.checked ? 1 : 0
+        };
 
         try {
-            await window.electronAPI.invoke("db-run", { sql, params });
+            await window.electronAPI.invoke("suppliers:save", supplierData);
             this.getModal().hide();
-            this.load();
-        } catch (e) { alert("Error al guardar"); }
+            await this.load();
+        } catch (e) {
+            const errorMsg = document.getElementById("error-message-supplier");
+            if(errorMsg) {
+                errorMsg.textContent = "* Error al guardar: El RFC o Nombre ya existen.";
+                errorMsg.style.display = "block";
+            }
+        }
     },
 
-    // Manejador de clicks
     handleClick: function(e) {
-        if (e.target.closest("#btn-new-supplier")) {
+        const btnNew = e.target.closest("#btn-new-supplier");
+        const btnEdit = e.target.closest(".btn-edit-supplier");
+        const btnSave = e.target.closest("#btn-save-supplier");
+
+        if (btnNew) {
             this.resetForm();
             this.getModal().show();
         }
 
-        const btnEdit = e.target.closest(".btn-edit-supplier");
         if (btnEdit) {
             this.resetForm();
             this.editingId = Number(btnEdit.dataset.id);
@@ -149,27 +155,22 @@ window.SupplierModule = {
             }
         }
 
-        if (e.target.closest("#btn-save-supplier")) {
-            this.save();
-        }
+        if (btnSave) this.save();
     },
 
-    // Manejador de búsqueda corregido
     handleInput: function(e) {
         if (e.target.id === "supplier-search") {
             const term = e.target.value.toLowerCase().trim();
-            
             const filtered = this.cache.filter(s => 
                 (s.nombre_empresa || "").toLowerCase().includes(term) || 
                 (s.contacto_nombre && s.contacto_nombre.toLowerCase().includes(term)) ||
                 (s.rfc && s.rfc.toLowerCase().includes(term))
             );
-            
             this.render(filtered);
         }
+        if (e.target.classList.contains("is-invalid")) e.target.classList.remove("is-invalid");
     }
 };
 
-// Ejecución inicial
 window.SupplierModule.init();
 window.SupplierModule.load();

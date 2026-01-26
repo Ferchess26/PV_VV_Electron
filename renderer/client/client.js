@@ -1,8 +1,7 @@
 /**
- * CLIENTS.JS - VERSIÓN FINAL REFORZADA
+ * CLIENTS.JS - VERSIÓN REFORZADA Y LIMPIA
  */
 
-// 1. LIMPIEZA DE EVENTOS PREVIOS (Evita que el sistema truene al reabrir)
 if (window.ClientsModule) {
     document.removeEventListener("click", window.ClientsModule.handleClick);
     document.removeEventListener("input", window.ClientsModule.handleInput);
@@ -13,11 +12,9 @@ window.ClientsModule = {
     editingId: null,
     formModalInstance: null,
 
-    // --- UTILIDADES ---
     cleanString: t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9@.\s]/g, "").trim(),
     normalize: t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
 
-    // --- INICIALIZADOR ---
     init: function() {
         this.handleClick = this.handleClick.bind(this);
         this.handleInput = this.handleInput.bind(this);
@@ -26,7 +23,6 @@ window.ClientsModule = {
         document.addEventListener("input", this.handleInput);
     },
 
-    // Obtener o crear instancia del modal de formulario
     getFormModal: function() {
         const el = document.getElementById("clientFormModal");
         if (!el) return null;
@@ -36,29 +32,22 @@ window.ClientsModule = {
         return this.formModalInstance;
     },
 
-    // --- CARGA DE DATOS CON SPINNER ---
     load: async function() {
         const loader = document.getElementById("clients-loading");
         const tableEl = document.getElementById("clients-table-main");
         const tbody = document.getElementById("clients-table-body");
 
-        // Encender visuales de carga
         if (loader) loader.style.display = "block";
         if (tableEl) tableEl.style.opacity = "0.2";
         if (tbody) tbody.innerHTML = ""; 
 
-        const sql = `SELECT id, nombre, apellido_paterno, apellido_materno,
-            TRIM(nombre || ' ' || IFNULL(apellido_paterno,'') || ' ' || IFNULL(apellido_materno,'')) AS nombre_completo,
-            email, telefono, rfc, estatus FROM clients ORDER BY id ASC`;
-
         try {
-            this.cache = await window.electronAPI.invoke("db-query", { sql });
+            // Usando el invoke específico configurado en el handler
+            this.cache = await window.electronAPI.invoke("clients:list");
             this.render(this.cache);
         } catch (e) { 
-            console.error("Error DB:", e);
             if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar datos</td></tr>`;
         } finally {
-            // Apagar visuales de carga
             if (loader) loader.style.display = "none";
             if (tableEl) tableEl.style.opacity = "1";
         }
@@ -73,10 +62,13 @@ window.ClientsModule = {
             return;
         }
 
-        tbody.innerHTML = data.map(c => `
+        tbody.innerHTML = data.map(c => {
+            // Construcción del nombre completo en el frontend para mayor flexibilidad
+            const nombreCompleto = `${c.nombre} ${c.apellido_paterno || ''} ${c.apellido_materno || ''}`.trim();
+            return `
             <tr>
                 <td>${c.id}</td>
-                <td class="fw-bold">${c.nombre_completo}</td>
+                <td class="fw-bold">${nombreCompleto}</td>
                 <td>${c.email || "-"}</td>
                 <td>${c.telefono || "-"}</td>
                 <td>${c.rfc || "-"}</td>
@@ -88,10 +80,10 @@ window.ClientsModule = {
                         <i class="fas fa-edit"></i>
                     </button>
                 </td>
-            </tr>`).join('');
+            </tr>`;
+        }).join('');
     },
 
-    // --- GUARDADO ---
     save: async function() {
         const modal = document.getElementById("clientFormModal");
         const msgError = document.getElementById("error-message-client");
@@ -110,7 +102,6 @@ window.ClientsModule = {
 
         if(!this.cleanString(f.n.value)){ f.n.classList.add("is-invalid"); err=true; }
         if(!this.cleanString(f.ap.value)){ f.ap.classList.add("is-invalid"); err=true; }
-        if (f.tel.value.replace(/\D/g, "").length !== 10) { f.tel.classList.add("is-invalid"); err=true; }
         
         if (err) {
             msgError.textContent = "* Rellene los campos obligatorios.";
@@ -118,27 +109,28 @@ window.ClientsModule = {
             return;
         }
 
-        const params = [
-            this.cleanString(f.n.value), this.cleanString(f.ap.value), this.cleanString(f.am.value), 
-            f.em.value.trim().toLowerCase(), f.tel.value.replace(/\D/g, ""), 
-            f.rfc.value.trim().toUpperCase(), f.est.checked ? 1 : 0
-        ];
-
-        const sql = this.editingId 
-            ? `UPDATE clients SET nombre=?, apellido_paterno=?, apellido_materno=?, email=?, telefono=?, rfc=?, estatus=? WHERE id = ${this.editingId}`
-            : `INSERT INTO clients (nombre, apellido_paterno, apellido_materno, email, telefono, rfc, estatus) VALUES (?,?,?,?,?,?,?)`;
+        const clientData = {
+            id: this.editingId,
+            nombre: this.cleanString(f.n.value),
+            apellido_paterno: this.cleanString(f.ap.value),
+            apellido_materno: this.cleanString(f.am.value),
+            email: f.em.value.trim().toLowerCase(),
+            telefono: f.tel.value.replace(/\D/g, ""),
+            rfc: f.rfc.value.trim().toUpperCase(),
+            estatus: f.est.checked ? 1 : 0,
+            direccion: "" // Añadido para evitar errores si tu tabla lo requiere
+        };
 
         try {
-            await window.electronAPI.invoke("db-run", { sql, params });
+            await window.electronAPI.invoke("clients:save", clientData);
             this.getFormModal().hide();
             await this.load();
         } catch (e) {
-            msgError.textContent = "* El RFC o Email ya existen.";
+            msgError.textContent = "* Error: El RFC o Email ya existen.";
             msgError.style.display = "block";
         }
     },
 
-    // --- MANEJADORES DE EVENTOS ---
     handleClick: function(e) {
         const btnEdit = e.target.closest(".btn-edit");
         const btnNew = e.target.closest("#btn-new-client");
@@ -179,12 +171,13 @@ window.ClientsModule = {
 
         if (e.target.id === "client-search") {
             const term = this.normalize(e.target.value);
-            const filtered = this.cache.filter(c => 
-                this.normalize(c.nombre_completo || "").includes(term) || 
-                this.normalize(c.email || "").includes(term) || 
-                this.normalize(c.rfc || "").includes(term) || 
-                this.normalize(c.telefono || "").includes(term)
-            );
+            const filtered = this.cache.filter(c => {
+                const full = this.normalize(`${c.nombre} ${c.apellido_paterno} ${c.apellido_materno}`);
+                return full.includes(term) || 
+                       this.normalize(c.email || "").includes(term) || 
+                       this.normalize(c.rfc || "").includes(term) || 
+                       (c.telefono && c.telefono.includes(term));
+            });
             this.render(filtered);
         }
         
@@ -194,18 +187,8 @@ window.ClientsModule = {
     }
 };
 
-// Iniciar módulo al cargar el archivo
 window.ClientsModule.init();
 
-// GESTIÓN DE APERTURA DESDE EL MODAL PRINCIPAL
-document.addEventListener("show.bs.modal", (e) => {
-    if (e.target.id === "clientsModal") {
-        const loader = document.getElementById("clients-loading");
-        const tableEl = document.getElementById("clients-table-main");
-        if (loader) loader.style.display = "block";
-        if (tableEl) tableEl.style.opacity = "0.2";
-    }
-});
 
 document.addEventListener("shown.bs.modal", (e) => {
     if (e.target.id === "clientsModal") {
