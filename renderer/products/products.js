@@ -1,215 +1,262 @@
-/**
- * PRODUCTS.JS - GESTIÓN DE INVENTARIO
- */
-
-if (window.ProductsModule) {
-    document.removeEventListener("click", window.ProductsModule.handleClick);
-    document.removeEventListener("input", window.ProductsModule.handleInput);
-    document.removeEventListener("change", window.ProductsModule.handleChange);
-}
-
 window.ProductsModule = {
-    cache: [],
+    modalForm: null,
     editingId: null,
-    formModalInstance: null,
+    cache: [],
+    selectedImage: null,
+    currentImagePath: null,
 
-    init: function() {
-        this.handleClick = this.handleClick.bind(this);
-        this.handleInput = this.handleInput.bind(this);
-        this.handleChange = this.handleChange.bind(this);
-        
-        document.addEventListener("click", this.handleClick);
-        document.addEventListener("input", this.handleInput);
-        document.addEventListener("change", this.handleChange);
+    init: async function () {
+        this.modalForm = bootstrap.Modal.getOrCreateInstance(
+            document.getElementById("productFormModal"),
+            { backdrop: false }
+        );
+
+        document.getElementById("btn-new-product").addEventListener("click", () => this.openForm());
+        document.getElementById("btn-save-product").addEventListener("click", (e) => {
+            e.preventDefault();
+            this.save();
+        });
+
+        const fileInput = document.getElementById("prod-file-input");
+        fileInput.setAttribute("accept", "image/jpeg, image/png, image/webp");
+        fileInput.addEventListener("change", e => this.handleImage(e));
+
+        document.getElementById("product-search").addEventListener("input", e => this.search(e.target.value));
+
+        document.getElementById("btn-add-category").addEventListener("click", () => {
+            const box = document.getElementById("new-category-box");
+            box.classList.toggle("d-none");
+            document.getElementById("new-category-name").focus();
+        });
+
+        document.getElementById("btn-add-unit").addEventListener("click", () => {
+            const box = document.getElementById("new-unit-box");
+            box.classList.toggle("d-none");
+            document.getElementById("new-unit-name").focus();
+        });
+
+        document.getElementById("btn-save-category").addEventListener("click", () => this.quickSaveCategory());
+        document.getElementById("btn-save-unit").addEventListener("click", () => this.quickSaveUnit());
+
+        const fields = ["prod-name", "prod-price-sell", "prod-category", "prod-unit"];
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener("input", () => el.classList.remove("is-invalid"));
+                el.addEventListener("change", () => el.classList.remove("is-invalid"));
+            }
+        });
+
+        await this.loadDependencies();
+        await this.loadProducts();
     },
 
-    getFormModal: function() {
-        const el = document.getElementById("productFormModal");
-        if (!el) return null;
-        if (!this.formModalInstance) {
-            this.formModalInstance = new bootstrap.Modal(el, { backdrop: 'static' });
-        }
-        return this.formModalInstance;
-    },
-
-    load: async function() {
-        const loader = document.getElementById("products-loading");
-        const tableEl = document.getElementById("products-table-main");
-        const tbody = document.getElementById("products-table-body");
-
-        if (loader) loader.style.display = "block";
-        if (tableEl) tableEl.style.opacity = "0.2";
-
+    showToast: async function(msg) {
         try {
-            // Cargar Selects primero
-            await this.loadDependencies();
-
-            const sql = `SELECT p.*, c.nombre as cat_nombre, u.abreviatura as uni_abreviatura 
-                         FROM products p 
-                         LEFT JOIN categories c ON p.id_categoria = c.id
-                         LEFT JOIN unidades_medida u ON p.id_unidad_medida = u.id
-                         WHERE p.estatus >= 0 ORDER BY p.nombre ASC`;
-
-            this.cache = await window.electronAPI.invoke("db-query", { sql });
-            this.render(this.cache);
-        } catch (e) { 
-            console.error(e);
-            if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error al cargar inventario</td></tr>`;
-        } finally {
-            if (loader) loader.style.display = "none";
-            if (tableEl) tableEl.style.opacity = "1";
-        }
+            const response = await fetch('../../helpers/alert_error.html');
+            const alertHtml = await response.text();
+            const alertWrapper = document.createElement('div');
+            alertWrapper.innerHTML = alertHtml;
+            const alertElement = alertWrapper.querySelector('.alert');
+            alertElement.classList.add('alert-danger', 'alert-fixed-bottom-left', 'fade');
+            
+            // CORRECCIÓN DE Z-INDEX PARA ESTAR FRENTE AL MODAL
+            alertElement.style.zIndex = "9999";
+            alertElement.style.position = "fixed";
+            
+            alertElement.textContent = msg;
+            document.body.appendChild(alertElement);
+            setTimeout(() => { alertElement.classList.add('show'); }, 10);
+            setTimeout(() => {
+                alertElement.classList.remove('show');
+                setTimeout(() => { alertElement.remove(); }, 500);
+            }, 2500);
+        } catch (e) { console.error(e); }
     },
 
-    loadDependencies: async function() {
-        const cats = await window.electronAPI.invoke("db-query", { sql: "SELECT * FROM categories ORDER BY nombre" });
-        const unis = await window.electronAPI.invoke("db-query", { sql: "SELECT * FROM unidades_medida ORDER BY nombre" });
-        
-        const catSelect = document.getElementById("prod-category");
-        const uniSelect = document.getElementById("prod-unit");
-        const filterCat = document.getElementById("filter-category");
+    handleImage(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-        if(catSelect) catSelect.innerHTML = cats.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-        if(uniSelect) uniSelect.innerHTML = unis.map(u => `<option value="${u.id}">${u.nombre} (${u.abreviatura})</option>`).join('');
-        if(filterCat) filterCat.innerHTML = '<option value="">Todas las categorías</option>' + cats.map(c => `<option value="${c.id}">${c.nombre}</option>`).join('');
-    },
-
-    render: function(data) {
-        const tbody = document.getElementById("products-table-body");
-        if (!tbody) return;
-
-        tbody.innerHTML = data.map(p => {
-            let stockClass = "";
-            if (p.stock_actual <= 0) stockClass = "stock-empty";
-            else if (p.stock_actual <= p.stock_minimo) stockClass = "stock-low";
-
-            return `
-            <tr>
-                <td class="small text-muted">${p.codigo_barras || "N/A"}</td>
-                <td class="fw-bold">${p.nombre}</td>
-                <td><span class="badge bg-light text-dark border">${p.cat_nombre || 'S/C'}</span></td>
-                <td class="fw-bold text-primary">$ ${p.precio_venta.toFixed(2)}</td>
-                <td><span class="${stockClass}">${p.stock_actual} ${p.uni_abreviatura}</span></td>
-                <td><span class="badge ${p.estatus == 1 ? "bg-success" : "bg-secondary"}">${p.estatus == 1 ? "Activo" : "Inactivo"}</span></td>
-                <td class="text-center">
-                    <button class="btn btn-sm btn-outline-warning btn-edit-prod" data-id="${p.id}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </td>
-            </tr>`;
-        }).join('') || '<tr><td colspan="7" class="text-center">No hay productos</td></tr>';
-    },
-
-    save: async function() {
-        const modal = document.getElementById("productFormModal");
-        const errDiv = document.getElementById("error-message-prod");
-        
-        const data = {
-            barcode: modal.querySelector("#prod-barcode").value.trim(),
-            name: modal.querySelector("#prod-name").value.trim(),
-            cat: modal.querySelector("#prod-category").value,
-            unit: modal.querySelector("#prod-unit").value,
-            pBuy: parseFloat(modal.querySelector("#prod-price-buy").value) || 0,
-            pSell: parseFloat(modal.querySelector("#prod-price-sell").value) || 0,
-            stock: parseInt(modal.querySelector("#prod-stock").value) || 0,
-            stockMin: parseInt(modal.querySelector("#prod-stock-min").value) || 0,
-            estatus: modal.querySelector("#prod-estatus").checked ? 1 : 0
-        };
-
-        if (!data.name || !data.pSell) {
-            errDiv.textContent = "* Nombre y Precio Venta son obligatorios.";
-            errDiv.style.display = "block";
+        // VALIDACIÓN DE TIPO DE ARCHIVO
+        if (!file.type.startsWith('image/')) {
+            this.showToast("Solo se permiten archivos de imagen.");
+            e.target.value = "";
             return;
         }
 
-        const params = [data.barcode, data.name, data.cat, data.unit, data.pBuy, data.pSell, data.stock, data.stockMin, data.estatus];
-        const sql = this.editingId 
-            ? `UPDATE products SET codigo_barras=?, nombre=?, id_categoria=?, id_unidad_medida=?, precio_compra=?, precio_venta=?, stock_actual=?, stock_minimo=?, estatus=? WHERE id = ${this.editingId}`
-            : `INSERT INTO products (codigo_barras, nombre, id_categoria, id_unidad_medida, precio_compra, precio_venta, stock_actual, stock_minimo, estatus) VALUES (?,?,?,?,?,?,?,?,?)`;
-
-        try {
-            await window.electronAPI.invoke("db-run", { sql, params });
-            this.getFormModal().hide();
-            await this.load();
-        } catch (e) {
-            errDiv.textContent = "* Error: El código de barras ya existe.";
-            errDiv.style.display = "block";
-        }
+        this.selectedImage = file;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            // TAMAÑO UNIFORME EN PREVISUALIZACIÓN
+            document.getElementById("prod-img-preview").innerHTML = `
+                <img src="${ev.target.result}" class="img-fluid rounded border" 
+                style="width: 140px; height: 140px; object-fit: cover;">
+            `;
+        };
+        reader.readAsDataURL(file);
     },
 
-    handleClick: function(e) {
-        const btnEdit = e.target.closest(".btn-edit-prod");
-        const btnNew = e.target.closest("#btn-new-product");
-        const btnSave = e.target.closest("#btn-save-product");
+    loadDependencies: async function () {
+        const cats = await window.electronAPI.invoke("db-query", { sql: "SELECT * FROM categories ORDER BY nombre" });
+        const units = await window.electronAPI.invoke("db-query", { sql: "SELECT * FROM unidades_medida ORDER BY nombre" });
+        document.getElementById("prod-category").innerHTML = `<option value="">----------</option>` + cats.map(c => `<option value="${c.id}">${c.nombre}</option>`).join("");
+        document.getElementById("prod-unit").innerHTML = `<option value="">----------</option>` + units.map(u => `<option value="${u.id}">${u.abreviatura}</option>`).join("");
+    },
 
-        if (btnNew || btnEdit) {
-            this.editingId = btnEdit ? Number(btnEdit.dataset.id) : null;
-            const modal = document.getElementById("productFormModal");
-            document.getElementById("error-message-prod").style.display = "none";
-            document.getElementById("prod-img-preview").innerHTML = '<i class="fas fa-image fa-3x text-muted"></i>';
-            
-            if (!this.editingId) {
-                document.getElementById("productFormTitle").textContent = "Nuevo Producto";
-                document.getElementById("form-product-core").reset();
-                document.getElementById("prod-utility-badge").textContent = "$ 0.00";
-            } else {
-                const p = this.cache.find(x => x.id === this.editingId);
-                if(p) {
-                    document.getElementById("productFormTitle").textContent = `Editar: ${p.nombre}`;
-                    document.getElementById("prod-barcode").value = p.codigo_barras || "";
-                    document.getElementById("prod-name").value = p.nombre;
-                    document.getElementById("prod-category").value = p.id_categoria;
-                    document.getElementById("prod-unit").value = p.id_unidad_medida;
-                    document.getElementById("prod-price-buy").value = p.precio_compra;
-                    document.getElementById("prod-price-sell").value = p.precio_venta;
-                    document.getElementById("prod-stock").value = p.stock_actual;
-                    document.getElementById("prod-stock-min").value = p.stock_minimo;
-                    document.getElementById("prod-estatus").checked = p.estatus == 1;
-                    this.calculateUtility();
-                }
+    quickSaveCategory: async function() {
+        const input = document.getElementById("new-category-name");
+        const name = input.value.trim();
+        if(!name) return;
+        await window.electronAPI.invoke("db-run", { sql: "INSERT INTO categories (nombre) VALUES (?)", params: [name] });
+        input.value = "";
+        document.getElementById("new-category-box").classList.add("d-none");
+        await this.loadDependencies();
+    },
+
+    quickSaveUnit: async function() {
+        const nameInput = document.getElementById("new-unit-name");
+        const abbrInput = document.getElementById("new-unit-abbr");
+        const name = nameInput.value.trim();
+        const abbr = abbrInput.value.trim();
+        if(!name || !abbr) return;
+        await window.electronAPI.invoke("db-run", { sql: "INSERT INTO unidades_medida (nombre, abreviatura) VALUES (?, ?)", params: [name, abbr] });
+        nameInput.value = ""; abbrInput.value = "";
+        document.getElementById("new-unit-box").classList.add("d-none");
+        await this.loadDependencies();
+    },
+
+    loadProducts: async function () {
+        const rows = await window.electronAPI.invoke("db-query", {
+            sql: `SELECT p.*, c.nombre cat, u.abreviatura uni FROM products p LEFT JOIN categories c ON p.id_categoria=c.id LEFT JOIN unidades_medida u ON p.id_unidad_medida=u.id`
+        });
+        this.cache = rows;
+        this.render(rows);
+    },
+
+    render: function (rows) {
+        document.getElementById("products-table-body").innerHTML = rows.map(p => `
+            <tr>
+                <td>${p.codigo_barras || "—"}</td>
+                <td class="fw-bold">${p.nombre}</td>
+                <td>${p.cat || "—"}</td>
+                <td>$${p.precio_venta.toFixed(2)}</td>
+                <td>
+                    <span class="${p.stock_actual <= 0 ? 'stock-empty' : p.stock_actual <= p.stock_minimo ? 'stock-low' : ''}">
+                        ${p.stock_actual} ${p.uni || ""}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-warning" onclick="ProductsModule.edit(${p.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join("");
+    },
+
+    openForm: function () {
+        this.editingId = null;
+        this.selectedImage = null;
+        this.currentImagePath = null;
+        document.getElementById("form-product-core").reset();
+        document.querySelectorAll(".is-invalid").forEach(el => el.classList.remove("is-invalid"));
+        document.getElementById("prod-file-input").value = "";
+        document.getElementById("new-category-box").classList.add("d-none");
+        document.getElementById("new-unit-box").classList.add("d-none");
+        document.getElementById("prod-img-preview").innerHTML = `<i class="fas fa-image fa-3x text-muted"></i>`;
+        document.getElementById("productFormTitle").innerText = "Nuevo Producto";
+        this.modalForm.show();
+    },
+
+    edit: function (id) {
+        const p = this.cache.find(x => x.id === id);
+        if (!p) return;
+        this.editingId = id;
+        this.selectedImage = null;
+        this.currentImagePath = p.imagen_path || null;
+        document.getElementById("form-product-core").reset();
+        document.querySelectorAll(".is-invalid").forEach(el => el.classList.remove("is-invalid"));
+
+        document.getElementById("prod-barcode").value = p.codigo_barras || "";
+        document.getElementById("prod-name").value = p.nombre;
+        document.getElementById("prod-desc").value = p.descripcion || "";
+        document.getElementById("prod-category").value = p.id_categoria || "";
+        document.getElementById("prod-unit").value = p.id_unidad_medida || "";
+        document.getElementById("prod-price-buy").value = p.precio_compra || 0;
+        document.getElementById("prod-price-sell").value = p.precio_venta;
+        document.getElementById("prod-stock").value = p.stock_actual || 0;
+        document.getElementById("prod-stock-min").value = p.stock_minimo || 5;
+        document.getElementById("prod-estatus").checked = p.estatus == 1;
+        document.getElementById("productFormTitle").innerText = "Editar Producto";
+
+        const preview = document.getElementById("prod-img-preview");
+        if (this.currentImagePath) {
+            const cleanPath = this.currentImagePath.replace(/\\/g, "/");
+            preview.innerHTML = `<img src="media://${cleanPath}" class="img-fluid rounded border" style="width: 140px; height: 140px; object-fit: cover;">`;
+        } else {
+            preview.innerHTML = `<i class="fas fa-image fa-3x text-muted"></i>`;
+        }
+        this.modalForm.show();
+    },
+
+    save: async function () {
+        const productName = document.getElementById("prod-name").value.trim();
+        const priceSell = document.getElementById("prod-price-sell").value;
+        const category = document.getElementById("prod-category").value;
+        const unit = document.getElementById("prod-unit").value;
+
+        let hasError = false;
+        if (!productName) { document.getElementById("prod-name").classList.add("is-invalid"); hasError = true; }
+        if (!priceSell) { document.getElementById("prod-price-sell").classList.add("is-invalid"); hasError = true; }
+        if (!category) { document.getElementById("prod-category").classList.add("is-invalid"); hasError = true; }
+        if (!unit) { document.getElementById("prod-unit").classList.add("is-invalid"); hasError = true; }
+
+        if (hasError) {
+            this.showToast("Por favor, llene los campos obligatorios marcados en rojo.");
+            return;
+        }
+
+        let imagePath = this.currentImagePath;
+        if (this.selectedImage) {
+            try {
+                imagePath = await window.electronAPI.invoke("save-product-image", {
+                    sourcePath: this.selectedImage.path,
+                    productName: productName
+                });
+            } catch (err) {
+                this.showToast("Error al procesar la imagen.");
+                return;
             }
-            this.getFormModal().show();
         }
 
-        if (btnSave) this.save();
+        const params = [
+            document.getElementById("prod-barcode").value || null,
+            productName,
+            document.getElementById("prod-desc").value || null,
+            category,
+            unit,
+            Number(document.getElementById("prod-price-buy").value || 0),
+            Number(priceSell),
+            Number(document.getElementById("prod-stock").value || 0),
+            Number(document.getElementById("prod-stock-min").value || 5),
+            document.getElementById("prod-estatus").checked ? 1 : 0,
+            imagePath
+        ];
+
+        const sql = this.editingId
+            ? `UPDATE products SET codigo_barras=?, nombre=?, descripcion=?, id_categoria=?, id_unidad_medida=?, precio_compra=?, precio_venta=?, stock_actual=?, stock_minimo=?, estatus=?, imagen_path=? WHERE id=${this.editingId}`
+            : `INSERT INTO products (codigo_barras,nombre,descripcion,id_categoria,id_unidad_medida,precio_compra,precio_venta,stock_actual,stock_minimo,estatus,imagen_path) VALUES (?,?,?,?,?,?,?,?,?,?,?)`;
+
+        await window.electronAPI.invoke("db-run", { sql, params });
+        this.modalForm.hide();
+        await this.loadProducts();
     },
 
-    handleInput: function(e) {
-        if (["prod-price-buy", "prod-price-sell"].includes(e.target.id)) this.calculateUtility();
-        
-        if (e.target.id === "product-search") {
-            const term = e.target.value.toLowerCase();
-            const filtered = this.cache.filter(p => 
-                p.nombre.toLowerCase().includes(term) || 
-                (p.codigo_barras && p.codigo_barras.includes(term)) ||
-                (p.cat_nombre && p.cat_nombre.toLowerCase().includes(term))
-            );
-            this.render(filtered);
-        }
-    },
-
-    handleChange: function(e) {
-        if (e.target.id === "filter-category") {
-            const val = e.target.value;
-            const filtered = val === "" ? this.cache : this.cache.filter(p => p.id_categoria == val);
-            this.render(filtered);
-        }
-    },
-
-    calculateUtility: function() {
-        const buy = parseFloat(document.getElementById("prod-price-buy").value) || 0;
-        const sell = parseFloat(document.getElementById("prod-price-sell").value) || 0;
-        const util = sell - buy;
-        const badge = document.getElementById("prod-utility-badge");
-        badge.textContent = `$ ${util.toFixed(2)}`;
-        badge.className = `form-control bg-light text-center fw-bold ${util >= 0 ? 'text-success' : 'text-danger'}`;
+    search: function (q) {
+        q = q.toLowerCase();
+        this.render(this.cache.filter(p => p.nombre.toLowerCase().includes(q) || (p.codigo_barras || "").includes(q)));
     }
 };
 
-// Iniciar
-window.ProductsModule.init();
-
-// Carga al abrir modal
-document.addEventListener("shown.bs.modal", (e) => {
-    if (e.target.id === "productsModal") window.ProductsModule.load();
-});
+ProductsModule.init();

@@ -1,23 +1,19 @@
-/* --- Estilos específicos del módulo Profile --- */
-
-/* Encabezado del modal (Usando el Azul Marino del Navbar: #1A365D) */
 .modal-header-profile {
-    background-color: #1A365D !important; 
-    border-bottom: 1px solid #1A365D;
+    background-color: #1A365D !important;
     color: white;
 }
 
-/* Contenedor de la foto para manejar el borde */
 .profile-photo-lg-wrapper {
-    width: 110px;
-    height: 110px;
+    width: 160px; /* Tamaño más imponente */
+    height: 160px;
     padding: 5px; 
-    border: 3px solid #00BCD4; /* Borde Cian/Aqua */
+    border: 4px solid #1A365D;
     border-radius: 50%;
-    box-shadow: 0 0 15px rgba(0, 188, 212, 0.3);
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
-/* La imagen en sí */
 .profile-photo-lg {
     width: 100%;
     height: 100%;
@@ -25,26 +21,25 @@
     object-fit: cover;
 }
 
-/* Asegura que el botón de cerrar sea blanco en el fondo oscuro */
-.modal-header-profile .btn-close-white {
-    filter: invert(1) grayscale(100%) brightness(200%);
+.btn-profile-action {
+    color: #1A365D;
+    border: 2px solid #1A365D;
+    background-color: transparent;
+    font-weight: bold;
+    transition: all 0.3s;
 }
 
-/* Estilo para los inputs deshabilitados */
-.form-control:disabled {
-    background-color: #f8f9fa;
-    opacity: 1;
-    color: #6c757d;
-    font-style: italic;
+.btn-profile-action:hover {
+    background-color: #1A365D;
+    color: white;
 }
 
-/* Estilo del botón Guardar (Éxito: #22c55e) */
-#btn-save-profile {
-    background-color: #22c55e !important;
-    border-color: #22c55e !important;
+.form-control {
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
 }
 
-#btn-save-profile:hover {
-    background-color: #16a34a !important; 
-    border-color: #15803d !important;
+.form-control:focus {
+    border-color: #1A365D;
+    box-shadow: 0 0 0 0.25rem rgba(26, 54, 93, 0.1);
 }

@@ -21,3 +21,8 @@ logs/
 # Environment
 .env
 .env.local
+
+# Assets generados en runtime
+assets/products/
+assets/profile/
+

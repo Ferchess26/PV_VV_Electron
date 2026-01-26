@@ -1,97 +1,110 @@
-const { app, BrowserWindow, Menu, ipcMain } = require("electron");
+const { app, BrowserWindow, Menu, ipcMain, protocol } = require("electron");
 const path = require("path");
 const getDatabase = require("./database/connection");
 const initializeDatabase = require("./database/init");
+const fs = require("fs");
 
-// 1. IMPORTAMOS LOS HANDLERS DE USUARIO MODULARIZADOS
-const { setupUserHandlers } = require("./ipc-handlers/userHandlers"); 
+const { setupUserHandlers } = require("./ipc-handlers/userHandlers");
 
 let mainWindow;
-let db; // Variable global para la conexión a la BD
+let db;
 
-/**
- * Crea la ventana de Login (Módulo 700x450px)
- */
 function createWindow() {
     Menu.setApplicationMenu(null);
-
     mainWindow = new BrowserWindow({
-        // Dimensiones ajustadas a tu diseño compacto de dos columnas:
-        width: 700,    
-        height: 450,   
+        width: 700,
+        height: 450,
         resizable: false,
         frame: false,
         roundedCorners: true,
         transparent: true,
         visualEffectState: "active",
-
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             contextIsolation: true,
             nodeIntegration: false,
-            disableBlinkFeatures: 'CSSAntialiasing'
         },
     });
-
     mainWindow.loadFile(path.join(__dirname, "renderer/login/login.html"));
 }
 
-/**
- * Crea la ventana principal (Home) después del login exitoso
- */
 function createHomeWindow() {
     const homeWindow = new BrowserWindow({
         fullscreen: true,
-        frame: false, // Puedes cambiar a true si quieres la barra nativa para el Home
+        frame: false,
         roundedCorners: true,
         transparent: false,
         visualEffectState: "active",
-
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             contextIsolation: true,
             nodeIntegration: false,
         },
     });
-
     homeWindow.loadFile(path.join(__dirname, "renderer/home/home.html"));
 }
 
-// =============================
-// IPC Handlers de Ventana (Se quedan en main.js por ser de control de ventana)
-// =============================
-
 ipcMain.on("minimize-window", () => mainWindow.minimize());
-
 ipcMain.on("maximize-window", () => {
     if (mainWindow.isMaximized()) mainWindow.unmaximize();
     else mainWindow.maximize();
 });
-
 ipcMain.on("close-window", () => mainWindow.close());
-
-
-// =============================
-// IPC Handler de Navegación (Se queda en main.js por ser control de ventana)
-// =============================
 
 ipcMain.on("login-success", () => {
     createHomeWindow();
     mainWindow.close();
 });
 
-// =============================
-// CICLO DE VIDA Y MODULARIZACIÓN
-// =============================
+ipcMain.handle("save-product-image", async (e, data) => {
+    if (!data || !data.sourcePath) throw new Error("sourcePath inválido");
+
+    // VALIDACIÓN DE EXTENSIONES
+    const ext = path.extname(data.sourcePath).toLowerCase();
+    const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+    if (!validExts.includes(ext)) throw new Error("Formato no válido");
+
+    const assetsDir = path.join(__dirname, "assets", "products");
+    if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
+
+    // NOMBRE ÚNICO (No borra las anteriores)
+    const fileName = `prod_${Date.now()}${ext}`;
+    const destPath = path.join(assetsDir, fileName);
+
+    fs.copyFileSync(data.sourcePath, destPath);
+    return `assets/products/${fileName}`;
+});
+
+
+ipcMain.handle("save-user-photo", async (e, data) => {
+    if (!data || !data.sourcePath) throw new Error("Ruta inválida");
+    const ext = path.extname(data.sourcePath).toLowerCase();
+    const validExts = ['.jpg', '.jpeg', '.png', '.webp'];
+    if (!validExts.includes(ext)) throw new Error("Formato no válido");
+
+    const assetsDir = path.join(__dirname, "assets", "profiles");
+    if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
+
+    const fileName = `user_${Date.now()}${ext}`;
+    const destPath = path.join(assetsDir, fileName);
+    fs.copyFileSync(data.sourcePath, destPath);
+    return `assets/profiles/${fileName}`;
+});
 
 app.whenReady().then(() => {
-    initializeDatabase(); 
-    db = getDatabase();     // <-- ABRE la conexión global aquí
-
-    // 2. EJECUTAMOS LOS HANDLERS MODULARIZADOS
+    initializeDatabase();
+    db = getDatabase();
     setupUserHandlers(db);
-    // setupProductHandlers(db); // Para futuros módulos
-    
+
+    protocol.registerFileProtocol('media', (request, callback) => {
+        const url = request.url.replace('media://', '');
+        try {
+            return callback(path.normalize(decodeURIComponent(url)));
+        } catch (error) {
+            console.error('Error al leer archivo', error);
+        }
+    });
+
     createWindow();
 });
 
@@ -99,10 +112,6 @@ app.on("window-all-closed", () => {
     if (process.platform !== "darwin") app.quit();
 });
 
-// 3. CIERRA la conexión global a la BD antes de que la aplicación termine
 app.on("before-quit", () => {
-    if (db) {
-        db.close();
-        console.log("Conexión a la base de datos cerrada.");
-    }
+    if (db) db.close();
 });

@@ -1,68 +1,89 @@
-<div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-md">
-        <div class="modal-content border-0 shadow-lg">
-            
-            <div class="modal-header modal-header-profile">
-                <h5 class="modal-title fs-5" id="userProfileModalLabel">
-                    <i class="fas fa-user-circle me-2"></i> Actualizar Mi Perfil
+<div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg"> <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header modal-header-profile py-3 px-4">
+                <h5 class="modal-title fs-4">
+                    <i class="fas fa-user-circle me-2"></i> Mi Perfil de Usuario
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             
             <div class="modal-body p-4">
                 <form id="profile-edit-form">
-                    
-                    <div class="d-flex flex-column align-items-center mb-5">
-                        <div class="profile-photo-lg-wrapper mb-3">
-                            <img id="modal-profile-photo" class="profile-photo-lg" src="../../assets/default_user.png" alt="Foto de Perfil">
+                    <div class="row g-4">
+                        <div class="col-md-4 text-center border-end">
+                            <div class="profile-photo-lg-wrapper mx-auto mb-3">
+                                <img id="modal-profile-photo" class="profile-photo-lg" src="../../assets/default_user.png">
+                            </div>
+                            <input type="file" id="photo-upload" class="d-none" accept="image/*">
+                            <button type="button" class="btn btn-profile-action btn-sm rounded-pill px-4" id="btn-upload-photo">
+                                <i class="fas fa-camera me-2"></i> Cambiar Foto
+                            </button>
+                            
+                            <div class="mt-4 p-3 bg-light rounded shadow-sm text-start">
+                                <label class="form-label fw-bold text-muted small mb-0">Usuario:</label>
+                                <p id="modal-username-text" class="mb-2 fw-bold text-dark">-</p>
+                                <label class="form-label fw-bold text-muted small mb-0">Rol de Sistema:</label>
+                                <p id="modal-role-text" class="mb-0 fw-bold text-primary">-</p>
+                                <input type="hidden" id="modal-username">
+                                <input type="hidden" id="modal-role">
+                            </div>
                         </div>
-                        
-                        <input type="file" id="photo-upload" class="d-none" accept="image/*">
-                        
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-upload-photo">
-                            <i class="fas fa-camera me-1"></i> Cambiar Foto
-                        </button>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="modal-full-name" class="form-label fw-semibold text-muted">Nombre Completo</label>
-                            <input type="text" class="form-control" id="modal-full-name" required>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="modal-email" class="form-label fw-semibold text-muted">Correo Electrónico</label>
-                            <input type="email" class="form-control" id="modal-email" required>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="modal-username" class="form-label fw-semibold text-muted">Usuario</label>
-                            <input type="text" class="form-control" id="modal-username" value="juanito_perez" disabled>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="modal-role" class="form-label fw-semibold text-muted">Rol en el Sistema</label>
-                            <input type="text" class="form-control" id="modal-role" value="Vendedor" disabled>
-                        </div>
-                    </div>
-                    
-                    <hr class="my-4">
-                    
-                    <div class="d-grid">
-                        <button type="button" class="btn btn-outline-warning text-dark fw-semibold" id="btn-change-password">
-                            <i class="fas fa-key me-2"></i> Cambiar Contraseña
-                        </button>
-                    </div>
+                        <div class="col-md-8">
+                            <h6 class="text-uppercase text-muted fw-bold mb-3 small">Información Personal</h6>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold mb-1">Nombre(s)</label>
+                                    <input type="text" class="form-control" id="modal-full-name" placeholder="Escribe tu nombre">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold mb-1">Apellido Paterno</label>
+                                    <input type="text" class="form-control" id="modal-paterno">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold mb-1">Apellido Materno</label>
+                                    <input type="text" class="form-control" id="modal-materno">
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label fw-bold mb-1">Correo Electrónico</label>
+                                    <input type="email" class="form-control" id="modal-email">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label fw-bold mb-1">Teléfono</label>
+                                    <input type="text" class="form-control" id="modal-phone">
+                                </div>
+                            </div>
 
+                            <hr class="my-4">
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-uppercase text-muted fw-bold mb-0 small">Seguridad</h6>
+                                <button type="button" class="btn btn-sm btn-outline-warning text-dark fw-bold" id="btn-toggle-pass">
+                                    <i class="fas fa-key me-1"></i> Modificar Contraseña
+                                </button>
+                            </div>
+
+                            <div id="pass-section" class="d-none bg-light p-3 rounded border">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="small fw-bold">Nueva Contraseña</label>
+                                        <input type="password" class="form-control form-control-sm" id="modal-password">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="small fw-bold">Confirmar Contraseña</label>
+                                        <input type="password" class="form-control form-control-sm" id="modal-confirm-password">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </form>
             </div>
             
-            <div class="modal-footer d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i> Cerrar
-                </button>
-                <button type="submit" form="profile-edit-form" class="btn btn-success fw-bold" id="btn-save-profile">
-                    <i class="fas fa-save me-1"></i> Guardar Cambios
+            <div class="modal-footer bg-light px-4">
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-success px-5 fw-bold" id="btn-save-profile">
+                    <i class="fas fa-save me-2"></i> Guardar Cambios
                 </button>
             </div>
         </div>

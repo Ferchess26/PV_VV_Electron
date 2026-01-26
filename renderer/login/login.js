@@ -1,5 +1,3 @@
-// login.js
-
 async function login() { 
     const userField = document.getElementById("user");
     const passField = document.getElementById("pass");
@@ -24,15 +22,8 @@ async function login() {
         const session = await window.electronAPI.invoke("login", { user, pass });
 
         if (session) {
-
-            // 🔥 ver si SI trae los permisos
             console.log("=== SESIÓN DEL USUARIO ===");
             console.log(session);
-
-            console.log("=== PERMISOS DEL USUARIO ===");
-            console.table(session.permisos);
-
-            // navegar al home
             window.electronAPI.send("login-success");
         } else {
             errorDisplay.textContent = "Credenciales incorrectas.";
@@ -45,3 +36,11 @@ async function login() {
     }
 }
 
+// --- Soporte para Tecla Enter ---
+document.getElementById("user").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") login();
+});
+
+document.getElementById("pass").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") login();
+});

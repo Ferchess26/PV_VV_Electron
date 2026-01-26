@@ -1,45 +1,77 @@
-/* HEADER PRODUCTOS */
-.modal-header-products { 
-    background-color: #1A365D !important; 
-    color: white; 
+.modal-header-products {
+  background-color: #1A365D !important;
+  color: white;
 }
 
-/* ESTRUCTURA MODAL PRINCIPAL PRODUCTOS */
-#productsModal .modal-content { 
-    height: 85vh; 
-    border-radius: 12px;
-}
-#productsModal .modal-body { 
-    flex: 1; 
-    overflow: hidden; 
-    display: flex; 
-    flex-direction: column; 
+#productsModal .modal-content {
+  height: 85vh;
+  border-radius: 12px;
 }
 
-/* BÚSQUEDA Y TABLA */
-.product-search-input { 
-    width: 350px; 
-    border-radius: 25px; 
-}
-#productsModal .table-responsive { 
-    flex: 1; 
-    overflow-y: auto; 
-}
-#productsModal .products-table thead th { 
-    position: sticky; 
-    top: 0; 
-    background-color: #f8fafc; 
-    z-index: 2; 
-    color: #1A365D; 
-    border-bottom: 2px solid #cbd5e1;
+#productsModal .modal-body {
+  display: flex;
+  flex-direction: column;
 }
 
-/* ESTADOS DE STOCK */
-.stock-low { background-color: rgba(255, 193, 7, 0.15); color: #856404; font-weight: bold; border-radius: 4px; padding: 2px 5px; }
-.stock-empty { background-color: rgba(220, 53, 69, 0.15); color: #721c24; font-weight: bold; border-radius: 4px; padding: 2px 5px; }
+/* TAMAÑO UNIFORME PARA IMÁGENES EN LA TABLA */
+#products-table-body img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
 
-/* FORMULARIO */
-.product-form-content { 
-    border: 2px solid #1A365D; 
-    border-radius: 10px; 
+/* CONTENEDOR DE PREVISUALIZACIÓN */
+#prod-img-preview {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.product-search-input {
+  width: 350px;
+  border-radius: 25px;
+}
+
+.products-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  z-index: 2;
+  color: #1A365D;
+}
+
+.stock-low {
+  background: rgba(255,193,7,.15);
+  color: #856404;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.stock-empty {
+  background: rgba(220,53,69,.15);
+  color: #721c24;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.product-form-content {
+  border: 2px solid #1A365D;
+  border-radius: 10px;
+}
+
+#new-category-box,
+#new-unit-box {
+  background: #f8fafc;
+  padding: 8px;
+  border-radius: 8px;
 }
